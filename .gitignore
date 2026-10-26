@@ -1,0 +1,3 @@
+# arquivos que o Python cria ao rodar os testes
+__pycache__/
+*.pyc

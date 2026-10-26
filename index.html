@@ -1,0 +1,1879 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Portal do Colaborador · C. &amp; Paoli</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Portal do colaborador de RH: benefícios, programas, políticas, calendário, aniversariantes e atendimento. Empresa e dados fictícios.">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%2317151F'/%3E%3Cpath d='M9 16a7 7 0 0 1 12-5M23 16a7 7 0 0 1-12 5' fill='none' stroke='%23B8ACFF' stroke-width='2.4' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap">
+
+<!--
+  PORTAL DO COLABORADOR · C. & Paoli corp. (empresa fictícia)
+  Uma página que reúne o que o colaborador procura no RH. Organização do arquivo:
+    1. <style>                      aparência (tema claro e escuro pelas mesmas variáveis)
+    2. <style> MODO ADMIN           aparência do painel do modo admin
+    3. HTML                         esqueleto das seções; o conteúdo entra pelo JavaScript
+    4. <script id="config">         quem está logado, unidades, feriados, atalhos, contatos, comunicados
+    5. <script id="itens">          benefícios, programas, políticas e DP, em PT e EN
+    6. bloco "personalizacao"       o que foi mudado no modo admin e salvo ({} = portal original)
+    7. <script> MODO ADMIN          o motor do modo admin
+    8. <script> final               comportamento, comentado bloco a bloco
+  Como editar, publicar e levar para produção: README.md.
+-->
+
+<style>
+/* Layout: barra de topo com busca e idioma; faixa de boas-vindas com atalhos e o "Hoje";
+   depois seções empilhadas numa coluna de 1240px. Uma cor de destaque (violeta);
+   as demais cores só aparecem quando significam algo (categoria, unidade, pagamento). */
+:root{
+  --fundo:#F6F5F2; --sup:#FFFFFF; --sup2:#FAF9F7; --borda:#E7E4DE; --borda2:#D6D2CA;
+  --tx:#17151F; --tx2:#56526A; --tx3:#8A869B;
+  --acc:#6D5AE6; --acc-forte:color-mix(in srgb,var(--acc) 82%,#000); --acc-suave:color-mix(in srgb,var(--acc) 10%,transparent);
+  --escuro:#17151F; --sobre-escuro:#F1EFF8; --sobre-escuro-2:#A9A4BF; --escuro-num:#B8ACFF;
+  --c-ben:#12855A; --c-prog:#6D5AE6; --c-pol:#2E7F8C; --c-dp:#B07114;
+  --u-mat:#6D5AE6; --u-fab:#2E7F8C; --u-cd:#B07114; --u-rem:#A0457A; --u-geral:#8A869B; --pag:#12855A;
+  --sombra:0 1px 2px rgba(23,21,31,.05),0 8px 24px rgba(23,21,31,.06);
+  --raio:12px;
+  --f:"DM Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"DM Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --fundo:#0E0D14; --sup:#16151F; --sup2:#1C1B27; --borda:#2A2838; --borda2:#3A374B;
+  --tx:#EEECF6; --tx2:#AAA6BD; --tx3:#78748B;
+  --acc:#9D8CFF; --acc-forte:color-mix(in srgb,var(--acc) 80%,#fff); --acc-suave:color-mix(in srgb,var(--acc) 14%,transparent);
+  --escuro:#08070D;
+  --c-ben:#3FCB8C; --c-prog:#9D8CFF; --c-pol:#4FC0CF; --c-dp:#E8B04E;
+  --u-mat:#9D8CFF; --u-fab:#4FC0CF; --u-cd:#E8B04E; --u-rem:#E07BB4; --u-geral:#78748B; --pag:#3FCB8C;
+  --sombra:0 1px 2px rgba(0,0,0,.4),0 10px 30px rgba(0,0,0,.25); color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --fundo:#0E0D14; --sup:#16151F; --sup2:#1C1B27; --borda:#2A2838; --borda2:#3A374B;
+  --tx:#EEECF6; --tx2:#AAA6BD; --tx3:#78748B;
+  --acc:#9D8CFF; --acc-forte:color-mix(in srgb,var(--acc) 80%,#fff); --acc-suave:color-mix(in srgb,var(--acc) 14%,transparent);
+  --escuro:#08070D;
+  --c-ben:#3FCB8C; --c-prog:#9D8CFF; --c-pol:#4FC0CF; --c-dp:#E8B04E;
+  --u-mat:#9D8CFF; --u-fab:#4FC0CF; --u-cd:#E8B04E; --u-rem:#E07BB4; --u-geral:#78748B; --pag:#3FCB8C;
+  --sombra:0 1px 2px rgba(0,0,0,.4),0 10px 30px rgba(0,0,0,.25); color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:120px;-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--fundo);color:var(--tx);font:15px/1.55 var(--f);-webkit-font-smoothing:antialiased}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--sup);z-index:60}
+h1,h2,h3{margin:0;line-height:1.2;text-wrap:balance}
+h2{font-size:22px;font-weight:700;letter-spacing:-.01em}
+h3{font-size:16px;font-weight:600}
+p{margin:0}
+a{color:inherit}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--acc);outline-offset:2px;border-radius:6px}
+.mono{font-family:var(--mono)}
+.num{font-variant-numeric:tabular-nums}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.miolo{max-width:1240px;margin:0 auto;padding-left:max(20px,env(safe-area-inset-left,0px));padding-right:max(20px,env(safe-area-inset-right,0px))}
+.pular{position:absolute;left:12px;top:-60px;z-index:100;background:var(--tx);color:var(--fundo);padding:8px 12px;border-radius:8px}
+.pular:focus{top:12px}
+.rotulo{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--tx3)}
+.botao{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--borda2);background:var(--sup);padding:8px 14px;border-radius:999px;font-size:14px;font-weight:500;text-decoration:none;transition:border-color .15s,background .15s}
+.botao:hover{border-color:var(--acc)}
+.botao.cheio{background:var(--acc);border-color:var(--acc);color:#fff}
+.botao.cheio:hover{background:var(--acc-forte);border-color:var(--acc-forte)}
+.ico{width:20px;height:20px;flex:none;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+
+/* ---------- topo ---------- */
+.topo{position:sticky;top:env(safe-area-inset-top,0px);z-index:50;background:var(--sup);border-bottom:1px solid var(--borda)}
+.topo-linha{display:flex;align-items:center;gap:20px;height:64px}
+.marca{display:flex;align-items:center;gap:10px;text-decoration:none;flex:none}
+.marca .selo{width:34px;height:34px;border-radius:9px;background:var(--escuro);display:grid;place-items:center}
+.marca .selo svg{width:22px;height:22px}
+.marca b{display:block;font-size:15px;font-weight:700;line-height:1.1}
+.marca small{display:block;font-size:12px;color:var(--tx3)}
+.busca{position:relative;flex:1;max-width:460px;margin-left:auto}
+.busca input{width:100%;height:40px;border:1px solid var(--borda);background:var(--sup2);border-radius:999px;padding:0 40px 0 38px;font-size:14px;outline:none;transition:border-color .15s,background .15s}
+.busca input:focus{border-color:var(--acc);background:var(--sup)}
+.busca .ico{position:absolute;left:12px;top:10px;width:18px;height:18px;color:var(--tx3)}
+.busca kbd{position:absolute;right:12px;top:10px;font-family:var(--mono);font-size:11px;color:var(--tx3);border:1px solid var(--borda2);border-radius:5px;padding:1px 6px}
+.resultados{position:absolute;left:0;right:0;top:46px;background:var(--sup);border:1px solid var(--borda);border-radius:var(--raio);box-shadow:var(--sombra);max-height:min(420px,70vh);overflow:auto;padding:6px;z-index:5}
+.resultados button{display:flex;gap:10px;align-items:flex-start;width:100%;text-align:left;border:0;background:none;padding:9px 10px;border-radius:8px}
+.resultados button[aria-selected="true"],.resultados button:hover{background:var(--acc-suave)}
+.resultados small{display:block;color:var(--tx3);font-size:12.5px}
+.resultados .tipo{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--tx3);margin-left:auto;padding-top:2px;white-space:nowrap}
+.resultados .vazio{padding:12px;color:var(--tx3);font-size:14px}
+.idioma{display:inline-flex;border:1px solid var(--borda);border-radius:999px;padding:3px;flex:none}
+.idioma button{border:0;background:none;padding:4px 10px;border-radius:999px;font-size:12.5px;font-weight:600;color:var(--tx2)}
+.idioma button[aria-pressed="true"]{background:var(--tx);color:var(--fundo)}
+.eu{display:flex;align-items:center;gap:10px;flex:none}
+.avatar{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-size:13px;font-weight:600;color:#fff;background:var(--acc);flex:none}
+.eu small{display:block;font-size:12px;color:var(--tx3);line-height:1.2}
+.eu b{display:block;font-size:13.5px;font-weight:600;line-height:1.2}
+.secoes{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none;margin-bottom:-1px}
+.secoes::-webkit-scrollbar{display:none}
+.secoes a{flex:none;font-size:14px;color:var(--tx2);text-decoration:none;padding:10px 12px 11px;border-bottom:2px solid transparent;transition:color .15s,border-color .15s}
+.secoes a:hover{color:var(--tx)}
+.secoes a[aria-current="true"]{color:var(--tx);font-weight:600;border-bottom-color:var(--acc)}
+
+/* ---------- boas-vindas ---------- */
+.boas{background:var(--escuro);color:var(--sobre-escuro);position:relative;overflow:hidden}
+.boas-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.32}
+.marca .selo .ed-logo-img{width:100%;height:100%;max-height:none;object-fit:contain;border-radius:9px}
+.avatar img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+.boas .ondas{position:absolute;right:-40px;top:-30px;width:620px;height:auto;opacity:.5;pointer-events:none}
+.boas .miolo{position:relative;display:grid;grid-template-columns:1fr 340px;gap:40px;padding-block:40px 44px}
+.boas .rotulo{color:var(--sobre-escuro-2)}
+.boas h1{font-size:clamp(26px,3.2vw,34px);font-weight:700;letter-spacing:-.015em;margin:8px 0 6px}
+.boas .sub{color:var(--sobre-escuro-2);font-size:15px}
+.atalhos{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:26px}
+.atalho{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:var(--sobre-escuro);border-radius:10px;padding:12px 14px;text-decoration:none;font-size:14px;font-weight:500;transition:background .15s,border-color .15s;text-align:left}
+.atalho:hover{background:rgba(255,255,255,.11);border-color:rgba(184,172,255,.5)}
+.atalho .ico{color:var(--escuro-num)}
+.quadro-hoje{background:var(--sup);color:var(--tx);border-radius:var(--raio);padding:20px;display:flex;flex-direction:column;gap:14px;align-self:start;box-shadow:0 20px 40px rgba(0,0,0,.25)}
+.quadro-hoje .data{font-size:14px;color:var(--tx2)}
+.quadro-hoje .data b{display:block;font-size:20px;color:var(--tx);font-weight:700}
+.linha-hoje{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding-top:12px;border-top:1px solid var(--borda);font-size:14px}
+.linha-hoje span:first-child{color:var(--tx2)}
+.linha-hoje b{font-weight:600;text-align:right}
+.linha-hoje small{display:block;color:var(--tx3);font-size:12.5px;font-weight:400}
+.contagem{font-family:var(--mono);font-size:12px;color:var(--pag);background:color-mix(in srgb,var(--pag) 12%,transparent);border-radius:999px;padding:2px 8px;margin-left:6px;white-space:nowrap}
+
+/* ---------- seções ---------- */
+.secao{padding-block:44px 8px}
+.cabeca{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:18px}
+.cabeca .rotulo{display:block;margin-bottom:6px}
+.cabeca p{color:var(--tx2);font-size:14.5px;max-width:62ch;margin-top:4px}
+.marcador{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:9px;vertical-align:1px}
+
+/* comunicados */
+.avisos{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.aviso{background:var(--sup);border:1px solid var(--borda);border-radius:var(--raio);padding:18px;display:flex;flex-direction:column;gap:8px}
+.aviso .meta{display:flex;justify-content:space-between;gap:10px;font-size:12.5px;color:var(--tx3)}
+.aviso p{color:var(--tx2);font-size:14px}
+.etiqueta{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:500;padding:2px 9px;border-radius:999px;background:var(--sup2);border:1px solid var(--borda);color:var(--tx2);white-space:nowrap}
+.etiqueta i{width:7px;height:7px;border-radius:50%;display:inline-block}
+
+/* filtro por unidade */
+.filtro-unidade{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.filtro-unidade span{font-size:13px;color:var(--tx3);margin-right:4px}
+.filtro-unidade button{border:1px solid var(--borda);background:var(--sup);border-radius:999px;padding:5px 12px;font-size:13px;color:var(--tx2)}
+.filtro-unidade button[aria-pressed="true"]{background:var(--tx);border-color:var(--tx);color:var(--fundo)}
+
+/* cartões de item */
+.grade{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.item{position:relative;display:flex;flex-direction:column;gap:10px;text-align:left;background:var(--sup);border:1px solid var(--borda);border-radius:var(--raio);padding:16px;transition:border-color .15s,box-shadow .2s,transform .2s}
+.item:hover{border-color:var(--cor);box-shadow:var(--sombra);transform:translateY(-1px)}
+.item .icone{width:36px;height:36px;border-radius:9px;display:grid;place-items:center;background:color-mix(in srgb,var(--cor) 12%,transparent);color:var(--cor)}
+.item h3{font-size:15.5px}
+.item p{font-size:13.5px;color:var(--tx2)}
+.item .rodape-item{display:flex;flex-wrap:wrap;gap:4px;margin-top:auto;padding-top:4px}
+.item .rodape-item span{font-size:11.5px;color:var(--tx3);border:1px solid var(--borda);border-radius:999px;padding:1px 7px}
+.item .rodape-item span.voce{color:var(--acc);border-color:color-mix(in srgb,var(--acc) 40%,transparent)}
+.item.apagado{opacity:.42}
+.item.apagado:hover{opacity:.7}
+.nenhum{grid-column:1/-1;padding:24px;border:1px dashed var(--borda2);border-radius:var(--raio);color:var(--tx3);text-align:center}
+
+/* calendário */
+.cal{display:grid;grid-template-columns:1.5fr 1fr;gap:18px;align-items:start}
+.cal>*{min-width:0}
+.painel{background:var(--sup);border:1px solid var(--borda);border-radius:var(--raio)}
+.cal-topo{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--borda)}
+.cal-topo h3{font-size:16px}
+.cal-topo div{display:flex;gap:6px}
+.cal-topo button{width:32px;height:32px;border-radius:8px;border:1px solid var(--borda);background:var(--sup)}
+.cal-topo button.hojeb{width:auto;padding:0 10px;font-size:13px}
+.semana,.dias{display:grid;grid-template-columns:repeat(7,1fr)}
+.semana span{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--tx3);padding:10px 8px 6px}
+.dias button{border:0;border-top:1px solid var(--borda);border-right:1px solid var(--borda);background:none;min-height:84px;padding:6px;text-align:left;display:flex;flex-direction:column;gap:3px;min-width:0}
+.dias button:nth-child(7n){border-right:0}
+.dias button .n{font-size:13px;font-weight:500;width:24px;height:24px;display:grid;place-items:center;border-radius:50%}
+.dias button.fora .n{color:var(--tx3);opacity:.5}
+.dias button.fds{background:var(--sup2)}
+.dias button.hoje .n{background:var(--acc);color:#fff}
+.dias button[aria-pressed="true"]{box-shadow:inset 0 0 0 2px var(--acc)}
+.dias button:hover{background:var(--acc-suave)}
+.ev{display:block;font-size:11.5px;line-height:1.25;padding:2px 5px;border-radius:4px;background:color-mix(in srgb,var(--c) 14%,transparent);color:var(--tx);border-left:3px solid var(--c);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mais{font-size:11px;color:var(--tx3);padding-left:4px}
+.legenda{display:flex;flex-wrap:wrap;gap:6px 14px;padding:12px 16px;border-top:1px solid var(--borda);font-size:12.5px;color:var(--tx2)}
+.legenda span{display:inline-flex;align-items:center;gap:6px}
+.legenda i{width:10px;height:10px;border-radius:3px}
+.lista-ev{list-style:none;margin:0;padding:6px 16px 10px}
+.lista-ev li{display:grid;grid-template-columns:54px 1fr;gap:12px;padding:11px 0;border-top:1px solid var(--borda)}
+.lista-ev li:first-child{border-top:0}
+.lista-ev .d{font-family:var(--mono);font-size:12px;color:var(--tx3);line-height:1.3}
+.lista-ev .d b{display:block;font-family:var(--f);font-size:20px;color:var(--tx);font-weight:600}
+.lista-ev p{font-size:14px;font-weight:500}
+.lista-ev small{display:block;font-size:12.5px;color:var(--tx3);font-weight:400}
+.painel-cab{padding:14px 16px;border-bottom:1px solid var(--borda);display:flex;justify-content:space-between;align-items:center;gap:10px}
+.painel-cab button{border:0;background:none;color:var(--acc);font-size:13px;font-weight:500;padding:0}
+
+/* pessoas */
+.pessoas{display:grid;grid-template-columns:2fr 1fr;gap:18px}
+.pessoas>*{min-width:0}
+.aniv{display:grid;grid-template-columns:repeat(3,1fr);gap:0}
+.aniv div{display:flex;gap:10px;align-items:center;padding:12px 16px;border-top:1px solid var(--borda)}
+.aniv div:nth-child(-n+3){border-top:0}
+.aniv b{display:block;font-size:14px;font-weight:600}
+.aniv small{display:block;font-size:12.5px;color:var(--tx3)}
+.aniv .dia{margin-left:auto;font-family:var(--mono);font-size:12px;color:var(--tx3);text-align:right}
+.aniv .dia.hj{color:var(--acc);font-weight:500}
+.casa{list-style:none;margin:0;padding:4px 16px 10px}
+.casa li{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--borda)}
+.casa li:first-child{border-top:0}
+.casa b{font-size:14px;font-weight:600}
+.casa small{display:block;font-size:12.5px;color:var(--tx3)}
+.casa .anos{margin-left:auto;font-family:var(--mono);font-size:12.5px;color:var(--acc);white-space:nowrap}
+
+/* contatos */
+.contatos{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.contato{background:var(--sup);border:1px solid var(--borda);border-radius:var(--raio);padding:16px;display:flex;gap:12px;align-items:flex-start}
+.contato>div{min-width:0}
+.contato .assunto{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--tx3)}
+.contato b{display:block;font-size:15px;font-weight:600;margin-top:2px}
+.contato small{display:block;font-size:13px;color:var(--tx2)}
+.contato button{margin-top:8px;border:0;background:none;padding:0;color:var(--acc);font-size:13px;font-weight:500;overflow-wrap:anywhere;text-align:left}
+.chamada{margin-top:16px;display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;background:var(--acc-suave);border-radius:var(--raio);padding:18px 20px}
+.chamada p{font-size:14.5px;color:var(--tx2)}
+.chamada b{color:var(--tx)}
+
+footer{margin-top:56px;border-top:1px solid var(--borda);padding-block:22px 34px;font-size:13px;color:var(--tx3)}
+footer .miolo{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+footer button{background:none;border:0;padding:0;color:inherit;text-decoration:underline;text-underline-offset:3px;font-size:13px}
+
+/* ---------- popups ---------- */
+dialog{border:0;padding:0;border-radius:16px;background:var(--sup);color:var(--tx);box-shadow:0 30px 80px rgba(0,0,0,.35);width:min(620px,calc(100% - 28px));max-height:calc(100% - 40px)}
+dialog::backdrop{background:rgba(14,13,20,.55)}
+dialog[open]{animation:entra .22s ease-out}
+@keyframes entra{from{opacity:0;transform:translateY(10px) scale(.99)}to{opacity:1;transform:none}}
+.card-topo{background:color-mix(in srgb,var(--cor) 72%,#0E0D14);color:#fff;padding:22px 24px 20px;position:relative}
+.card-topo .cat{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;opacity:.85}
+.card-topo h2{font-size:24px;margin-top:6px;color:#fff}
+.card-topo p{opacity:.9;margin-top:4px;font-size:14.5px}
+.card-topo .fechar{position:absolute;right:14px;top:14px;color:#fff;border-color:rgba(255,255,255,.35);background:rgba(0,0,0,.08)}
+.fechar{width:34px;height:34px;border-radius:9px;border:1px solid var(--borda);background:var(--sup);font-size:18px;line-height:1;display:grid;place-items:center}
+.card-corpo{padding:6px 24px 22px}
+.bloco{padding:16px 0;border-top:1px solid var(--borda)}
+.bloco:first-child{border-top:0}
+.bloco h3{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--tx3);font-weight:500;margin-bottom:8px}
+.bloco p{font-size:15px}
+.passos{margin:0;padding:0;list-style:none;counter-reset:p;display:grid;gap:8px}
+.passos li{counter-increment:p;display:grid;grid-template-columns:26px 1fr;gap:10px;font-size:15px}
+.passos li::before{content:counter(p);width:24px;height:24px;border-radius:50%;background:color-mix(in srgb,var(--cor) 14%,transparent);color:var(--cor);font-size:12.5px;font-weight:600;display:grid;place-items:center}
+.unidades{display:flex;flex-wrap:wrap;gap:6px}
+.unidades span{font-size:13px;padding:4px 10px;border-radius:999px;border:1px solid var(--borda);color:var(--tx3)}
+.unidades span.sim{color:var(--tx);border-color:var(--borda2);background:var(--sup2)}
+.unidades span.voce{border-color:var(--acc);color:var(--acc);font-weight:500}
+.card-acoes{display:flex;flex-wrap:wrap;gap:8px;padding-top:16px;border-top:1px solid var(--borda)}
+.dlg-topo{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:18px 22px;border-bottom:1px solid var(--borda)}
+.dlg-corpo{padding:18px 22px 22px;display:flex;flex-direction:column;gap:14px}
+.campo{display:flex;flex-direction:column;gap:5px}
+.campo label{font-size:13px;font-weight:500;color:var(--tx2)}
+.campo input,.campo select,.campo textarea{border:1px solid var(--borda);background:var(--sup2);border-radius:9px;padding:10px 12px;font-size:15px;outline:none}
+.campo textarea{min-height:110px;resize:vertical}
+.campo input:focus,.campo select:focus,.campo textarea:focus{border-color:var(--acc);background:var(--sup)}
+.campo [aria-invalid="true"]{border-color:#C0392F}
+.erro{font-size:13px;color:#C0392F}
+.dupla{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.dica{font-size:13px;color:var(--tx3)}
+.ok{text-align:center;padding:26px 8px 10px;display:flex;flex-direction:column;align-items:center;gap:10px}
+.ok .selo-ok{width:50px;height:50px;border-radius:50%;background:color-mix(in srgb,var(--pag) 14%,transparent);color:var(--pag);display:grid;place-items:center;font-size:22px}
+.ok code{font-family:var(--mono);font-size:14px;background:var(--sup2);border:1px solid var(--borda);padding:5px 10px;border-radius:8px}
+.ok p{color:var(--tx2);max-width:44ch}
+
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translate(-50%,14px);opacity:0;background:var(--tx);color:var(--fundo);padding:10px 16px;border-radius:10px;font-size:14px;z-index:90;transition:opacity .2s,transform .2s;pointer-events:none;max-width:calc(100% - 32px)}
+.toast.ver{opacity:1;transform:translate(-50%,0)}
+
+/* ---------- telas menores ---------- */
+@media (max-width:1080px){
+  .grade{grid-template-columns:repeat(3,1fr)}
+  .boas .miolo{grid-template-columns:1fr}
+  .eu div{display:none}
+}
+@media (max-width:860px){
+  .grade{grid-template-columns:repeat(2,1fr)}
+  .avisos,.contatos{grid-template-columns:1fr 1fr}
+  .cal,.pessoas{grid-template-columns:1fr}
+  .atalhos{grid-template-columns:repeat(2,1fr)}
+  .marca span{display:none}
+}
+@media (max-width:600px){
+  .topo-linha{gap:10px}
+  .busca kbd{display:none}
+  .eu{display:none}
+  .avisos,.contatos,.aniv{grid-template-columns:1fr}
+  .aniv div:nth-child(-n+3){border-top:1px solid var(--borda)}
+  .aniv div:first-child{border-top:0}
+  .dias button{min-height:52px;padding:4px}
+  .dias .ev{font-size:0;padding:0;height:5px;border-left:0;background:var(--c)}
+  .dupla{grid-template-columns:1fr}
+  .card-topo,.card-corpo{padding-left:18px;padding-right:18px}
+}
+@media (max-width:420px){.grade{grid-template-columns:1fr}}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{animation:none!important;transition:none!important}}
+</style>
+<!-- MODO ADMIN: aparência do painel (a mesma nos três projetos; para levar a outro site, copie este bloco) -->
+<style>
+/* MODO ADMIN · aparência do painel. Neutra e diferente do site, de propósito:
+   quem edita distingue na hora o que é ferramenta e o que é página. */
+.ed,.ed *{box-sizing:border-box}
+.ed{--ed-bg:#FFFFFF;--ed-bg2:#F4F4F7;--ed-tx:#1C1B22;--ed-tx2:#5E5C6B;--ed-linha:#E2E1E8;--ed-acc:#2563EB;
+  font:13.5px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--ed-tx);letter-spacing:0;text-transform:none}
+.ed button,.ed input,.ed textarea{font:inherit;color:inherit;letter-spacing:0;text-transform:none}
+.ed button{cursor:pointer}
+.ed :focus-visible{outline:2px solid var(--ed-acc);outline-offset:2px}
+[data-secao][hidden],nav a[hidden],img[data-img][hidden]{display:none!important}
+.ed-logo-img{height:100%;width:auto;max-height:44px;display:block;object-fit:contain}
+
+/* painel lateral (no celular vira uma gaveta que sobe de baixo) */
+#ed-painel{position:fixed;top:0;right:0;bottom:0;width:min(390px,100%);background:var(--ed-bg);border-left:1px solid var(--ed-linha);box-shadow:-18px 0 50px rgba(0,0,0,.18);
+  z-index:2147483000;display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+#ed-painel[hidden]{display:none}
+.ed-cab{display:flex;align-items:center;gap:8px;padding:12px 14px;border-bottom:1px solid var(--ed-linha)}
+.ed-cab b{font-size:15px;margin-right:auto}
+.ed-bt{border:1px solid var(--ed-linha);background:var(--ed-bg);border-radius:8px;padding:6px 10px;font-size:13px;line-height:1.2;white-space:nowrap}
+.ed-bt:hover{border-color:#B9B8C6}
+.ed-bt.pri{background:var(--ed-acc);border-color:var(--ed-acc);color:#fff}
+.ed-bt.pri:hover{background:#1D4FD7}
+.ed-bt.mini{padding:3px 7px;font-size:12px;border-radius:6px}
+.ed-bt.largo{display:block;width:100%;margin-bottom:8px}
+.ed-bt[disabled]{opacity:.45;cursor:default}
+.ed-abas{display:flex;gap:2px;padding:6px 8px 0;border-bottom:1px solid var(--ed-linha)}
+.ed-abas button{border:0;background:none;padding:8px 9px;font-size:13px;color:var(--ed-tx2);border-bottom:2px solid transparent;margin-bottom:-1px}
+.ed-abas button[aria-selected="true"]{color:var(--ed-tx);font-weight:600;border-bottom-color:var(--ed-acc)}
+.ed-msg{font-size:12.5px;padding:8px 10px;margin:10px 14px 0;border-radius:8px;background:#EEF4FF;color:#1E3A8A}
+.ed-msg.erro{background:#FEF3F2;color:#912018}
+.ed-msg[hidden]{display:none}
+.ed-corpo{flex:1;overflow:auto;padding:14px}
+.ed-rodape{margin:0;padding:10px 14px;border-top:1px solid var(--ed-linha);font-size:12px;color:var(--ed-tx2)}
+.ed-dica{color:var(--ed-tx2);font-size:12.5px;margin:0 0 12px}
+.ed-dica b{color:var(--ed-tx)}
+.ed-sub{font-size:11.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--ed-tx2);margin:16px 0 2px}
+.ed-sub:first-child{margin-top:0}
+.ed input[type=search],.ed input[type=text],.ed input[type=number],.ed input[type=date],.ed select,.ed textarea{width:100%;min-width:0;border:1px solid var(--ed-linha);border-radius:7px;background:var(--ed-bg);padding:6px 8px;font-size:13px;outline:none}
+.ed input[type=search]{margin-bottom:8px}
+.ed textarea{resize:vertical;min-height:34px}
+.ed input:focus,.ed select:focus,.ed textarea:focus{border-color:var(--ed-acc)}
+
+/* formulário das abas do site (ex.: Comunicados, Preço e datas) */
+.ed-campo{display:grid;gap:4px;margin-bottom:10px;font-size:12px;color:var(--ed-tx2)}
+.ed-registro{display:grid;gap:6px;border:1px solid var(--ed-linha);border-radius:9px;padding:9px;margin-bottom:8px}
+.ed-linha{display:flex;gap:6px;align-items:center}
+.ed-checks{display:grid;grid-template-columns:1fr 1fr;gap:6px 12px;font-size:13px}
+.ed-checks label{display:flex;align-items:center;gap:6px}
+
+/* textos */
+.ed-texto{border-top:1px solid var(--ed-linha);padding:9px 0}
+.ed-texto:first-child,.ed-sub+.ed-texto{border-top:0}
+.ed-texto .k{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:11.5px;color:#8C8A9B;margin-bottom:4px}
+.ed-texto .k span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ed-texto.mudou .k span::before{content:"● ";color:#F59E0B}
+
+/* imagens */
+.ed-imagens{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.ed-imagens figure{margin:0;border:1px solid var(--ed-linha);border-radius:9px;overflow:hidden;background:var(--ed-bg2)}
+.ed-miniatura{aspect-ratio:4/3;display:grid;place-items:center;background:#ECEBF1 center/cover no-repeat;color:#8C8A9B;font-size:12px}
+.ed-svg{width:56px;height:56px;display:grid;place-items:center;background:#1C1B22;color:#fff;border-radius:10px;padding:8px}
+.ed-svg svg{width:100%;height:100%}
+.ed-imagens figcaption{padding:6px 7px;font-size:12px;display:flex;flex-direction:column;gap:5px}
+.ed-imagens figcaption div{display:flex;gap:4px}
+
+/* cores */
+.ed-cor{display:grid;grid-template-columns:1fr auto auto auto;gap:6px;align-items:center;padding:6px 0;border-top:1px solid var(--ed-linha)}
+.ed-cor:first-of-type{border-top:0}
+.ed-cor input[type=color]{width:34px;height:28px;border:1px solid var(--ed-linha);border-radius:6px;padding:1px;background:var(--ed-bg)}
+.ed-cor small{display:block;font-size:10.5px;color:#8C8A9B;text-align:center}
+
+/* seções */
+.ed-secoes{list-style:none;margin:0 0 12px;padding:0;display:grid;gap:6px}
+.ed-secoes li{display:flex;align-items:center;gap:8px;border:1px solid var(--ed-linha);border-radius:9px;padding:7px 8px}
+.ed-secoes .nome{flex:1;min-width:0}
+.ed-secoes li.oculta .nome{color:#A3A1B3;text-decoration:line-through}
+.ed-secoes label{display:flex;align-items:center;gap:4px;font-size:12px;color:var(--ed-tx2)}
+
+/* ferramentas que flutuam sobre a página, e o contorno do que dá para editar */
+.ed-flut{position:fixed;z-index:2147482800;display:flex;gap:3px;background:#1C1B22;border-radius:8px;padding:3px;box-shadow:0 6px 18px rgba(0,0,0,.3)}
+.ed-flut[hidden]{display:none}
+.ed-flut button{border:0;background:transparent;color:#fff;font-size:12.5px;padding:5px 8px;border-radius:6px;line-height:1}
+.ed-flut button:hover{background:rgba(255,255,255,.14)}
+html.ed-modo [data-ed-editavel]{cursor:text}
+html.ed-modo [data-ed-editavel]:hover{outline:1px dashed #2563EB;outline-offset:3px}
+html.ed-modo [data-ed-editavel]:focus{outline:2px solid #2563EB;outline-offset:3px}
+html.ed-modo [data-img]:hover{outline:2px dashed rgba(37,99,235,.7);outline-offset:-2px}
+html.ed-modo [data-edit-lista]>*:hover{box-shadow:inset 3px 0 0 rgba(37,99,235,.55)}
+@media (min-width:1200px){html.ed-modo body{margin-right:390px}}
+@media (max-width:640px){#ed-painel{top:auto;height:min(78vh,100%);width:100%;border-left:0;border-top:1px solid var(--ed-linha);border-radius:14px 14px 0 0}}
+</style>
+</head>
+<body>
+<a class="pular" href="#conteudo" data-t="pular" data-lugar="Topo">Pular para o conteúdo</a>
+
+<!-- Ícones usados na página: um "sprite" para não repetir o desenho em cada lugar -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-busca" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></symbol>
+  <symbol id="i-saude" viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/><path d="M12 9v5M9.5 11.5h5"/></symbol>
+  <symbol id="i-dente" viewBox="0 0 24 24"><path d="M8 3c-3 0-4 2.5-4 5 0 3 1.5 4 2 7s1 6 2.5 6S10 16 12 16s2 5 3.5 5S17 18 17.5 15s2-4 2-7c0-2.5-1-5-4-5-1.6 0-2.4 1-3.5 1S9.6 3 8 3z"/></symbol>
+  <symbol id="i-prato" viewBox="0 0 24 24"><circle cx="12" cy="12" r="6"/><path d="M3 4v6a2 2 0 0 0 2 2M5 4v16M21 4c-1.5 1-2 3-2 5s.5 3 2 3v8"/></symbol>
+  <symbol id="i-escudo" viewBox="0 0 24 24"><path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z"/><path d="M9 12l2 2 4-4"/></symbol>
+  <symbol id="i-haltere" viewBox="0 0 24 24"><path d="M6 8v8M3 10v4M18 8v8M21 10v4M6 12h12"/></symbol>
+  <symbol id="i-etiqueta" viewBox="0 0 24 24"><path d="M3 12V4h8l10 10-8 8z"/><circle cx="7.5" cy="8.5" r="1.3"/></symbol>
+  <symbol id="i-mentoria" viewBox="0 0 24 24"><circle cx="8" cy="8" r="3"/><circle cx="17" cy="10" r="2.4"/><path d="M2.5 20c.5-3.5 3-5.5 5.5-5.5s5 2 5.5 5.5M14 15.5c.8-.6 1.8-1 3-1 2.2 0 4 1.6 4.5 4.5"/></symbol>
+  <symbol id="i-livro" viewBox="0 0 24 24"><path d="M4 5a2 2 0 0 1 2-2h13v15H6a2 2 0 0 0-2 2z"/><path d="M4 20a2 2 0 0 0 2 1h13v-3M8 7h7"/></symbol>
+  <symbol id="i-indica" viewBox="0 0 24 24"><circle cx="10" cy="8" r="3.5"/><path d="M3.5 20c.6-3.8 3.3-6 6.5-6 1.3 0 2.5.3 3.5 1M18 13v7M14.5 16.5h7"/></symbol>
+  <symbol id="i-bebe" viewBox="0 0 24 24"><circle cx="12" cy="11" r="7"/><path d="M9.5 12.5c.7.8 1.5 1.2 2.5 1.2s1.8-.4 2.5-1.2M9.5 9.5h.01M14.5 9.5h.01M12 4c-1.5 0-2 1-1.5 2"/></symbol>
+  <symbol id="i-casa" viewBox="0 0 24 24"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10M10 20v-5h4v5"/></symbol>
+  <symbol id="i-aviao" viewBox="0 0 24 24"><path d="M10.5 13.5L3 11l1.5-1.5 8 1 4-4.5c1-1 2.6-1.5 3.5-.6s.4 2.5-.6 3.5l-4.5 4 1 8L14.5 22l-2.5-7.5-3 3V20l-1.5 1-1-3.5L3 16.5l1-1.5h2.5z"/></symbol>
+  <symbol id="i-balanca" viewBox="0 0 24 24"><path d="M12 3v18M7 21h10M5 7h14M5 7l-3 6a3 3 0 0 0 6 0zM19 7l-3 6a3 3 0 0 0 6 0z"/></symbol>
+  <symbol id="i-doc" viewBox="0 0 24 24"><path d="M6 2h9l5 5v15H6z"/><path d="M14 2v6h6M9 13h8M9 17h6"/></symbol>
+  <symbol id="i-sol" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
+  <symbol id="i-relogio" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+  <symbol id="i-cartao" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18M7 15h4"/></symbol>
+  <symbol id="i-maleta" viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2M3 13h18"/></symbol>
+  <symbol id="i-capelo" viewBox="0 0 24 24"><path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11v5c2 2 10 2 12 0v-5M22 9v6"/></symbol>
+  <symbol id="i-balao" viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/><path d="M8 9h8M8 12h5"/></symbol>
+  <symbol id="i-arvore" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="4" rx="1"/><rect x="3" y="17" width="6" height="4" rx="1"/><rect x="15" y="17" width="6" height="4" rx="1"/><path d="M12 7v5M6 17v-3h12v3"/></symbol>
+  <symbol id="i-dinheiro" viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.6"/><path d="M6 9v.01M18 15v.01"/></symbol>
+</svg>
+
+<header class="topo" id="topo">
+  <div class="miolo">
+    <div class="topo-linha">
+      <a class="marca" href="#inicio" aria-label="C. &amp; Paoli, início do portal">
+        <span class="selo" data-img="logo" data-img-nome="Logo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 12a6 6 0 0 1 10.5-4M18 12a6 6 0 0 1-10.5 4" fill="none" stroke="#B8ACFF" stroke-width="2.2" stroke-linecap="round"/></svg></span>
+        <span><b data-t="nomePortal">Portal do Colaborador</b><small>C. &amp; Paoli corp.</small></span>
+      </a>
+      <div class="busca">
+        <svg class="ico" aria-hidden="true"><use href="#i-busca"/></svg>
+        <label class="sr" for="busca" data-t="buscar">Buscar no portal</label>
+        <input id="busca" type="search" autocomplete="off" role="combobox" aria-expanded="false" aria-autocomplete="list" aria-controls="resultados" data-t-ph="buscaPh">
+        <kbd>/</kbd>
+        <div class="resultados" id="resultados" role="listbox" hidden></div>
+      </div>
+      <div class="idioma" role="group" aria-label="Idioma / Language">
+        <button type="button" data-lang="pt" aria-pressed="true">PT</button>
+        <button type="button" data-lang="en" aria-pressed="false">EN</button>
+      </div>
+      <div class="eu"><span class="avatar" id="eu-ini">MC</span><div><b id="eu-nome"></b><small id="eu-unidade"></small></div></div>
+    </div>
+    <nav class="secoes" aria-label="Seções" id="menu">
+      <a href="#inicio" data-t="mInicio">Início</a>
+      <a href="#calendario" data-t="mCal">Calendário</a>
+      <a href="#beneficios" data-t="mBen">Benefícios</a>
+      <a href="#programas" data-t="mProg">Programas</a>
+      <a href="#politicas" data-t="mPol">Políticas de RH</a>
+      <a href="#dp" data-t="mDp">Departamento Pessoal</a>
+      <a href="#pessoas" data-t="mPes">Pessoas</a>
+      <a href="#contato" data-t="mCont">Fale com o RH</a>
+    </nav>
+  </div>
+</header>
+
+<main id="conteudo">
+  <section class="boas" id="inicio" data-lugar="Boas-vindas">
+    <img class="boas-img" data-img="banner" data-img-opcional data-img-nome="Fundo da faixa de boas-vindas (opcional)" alt="" hidden>
+    <svg class="ondas" viewBox="0 0 620 300" aria-hidden="true"><g fill="none" stroke="#B8ACFF" stroke-width="1">
+      <path d="M0 220C120 160 220 260 340 200S520 120 620 160" opacity=".5"/><path d="M0 240C120 180 220 280 340 220S520 140 620 180" opacity=".35"/>
+      <path d="M0 260C120 200 220 300 340 240S520 160 620 200" opacity=".22"/><path d="M0 200C120 140 220 240 340 180S520 100 620 140" opacity=".6"/></g></svg>
+    <div class="miolo">
+      <div>
+        <span class="rotulo" id="saudacao-rot"></span>
+        <h1 id="saudacao"></h1>
+        <p class="sub" data-t="subBoas">Tudo do RH em um lugar: benefícios, regras, datas e quem procurar.</p>
+        <nav class="atalhos" id="atalhos" aria-label="Atalhos"></nav>
+      </div>
+      <aside class="quadro-hoje" aria-labelledby="hoje-t">
+        <div class="data"><span class="rotulo" id="hoje-t" data-t="hoje">Hoje</span><b id="hoje-data"></b></div>
+        <div class="linha-hoje"><span data-t="proxPag">Próximo pagamento</span><b id="prox-pag"></b></div>
+        <div class="linha-hoje"><span data-t="proxAdi">Adiantamento</span><b id="prox-adi"></b></div>
+        <div class="linha-hoje"><span data-t="proxFer">Próximo feriado</span><b id="prox-fer"></b></div>
+        <div class="linha-hoje"><span data-t="clima">Clima</span><b id="clima"></b></div>
+      </aside>
+    </div>
+  </section>
+
+  <section class="secao miolo" id="avisos" data-secao="avisos" data-secao-nome="Comunicados" aria-labelledby="avisos-t">
+    <div class="cabeca"><div><span class="rotulo" data-t="rotAvisos">Comunicados</span><h2 id="avisos-t" data-t="tAvisos">O que está acontecendo</h2></div></div>
+    <div class="avisos" id="lista-avisos"></div>
+  </section>
+
+  <section class="secao miolo" id="calendario" data-secao="calendario" data-secao-nome="Calendário" aria-labelledby="cal-t">
+    <div class="cabeca"><div><span class="rotulo" data-t="rotCal">Calendário do RH</span><h2 id="cal-t" data-t="tCal">Datas que importam</h2><p data-t="pCal">Pagamento, feriados e eventos por unidade. Clique num dia para ver o que acontece.</p></div></div>
+    <div class="cal">
+      <div class="painel">
+        <div class="cal-topo"><h3 id="cal-mes"></h3><div><button type="button" class="hojeb" id="cal-hoje" data-t="hoje">Hoje</button><button type="button" id="cal-ant" aria-label="Mês anterior">‹</button><button type="button" id="cal-prox" aria-label="Próximo mês">›</button></div></div>
+        <div class="semana" id="cal-semana"></div>
+        <div class="dias" id="cal-dias"></div>
+        <div class="legenda" id="cal-legenda"></div>
+      </div>
+      <div class="painel">
+        <div class="painel-cab"><h3 id="cal-lista-t"></h3><button type="button" id="cal-limpar" hidden data-t="verProximos">Ver próximos</button></div>
+        <ul class="lista-ev" id="cal-lista"></ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="secao miolo" id="beneficios" data-secao="beneficios" data-secao-nome="Benefícios" aria-labelledby="ben-t">
+    <div class="cabeca">
+      <div><span class="rotulo" data-t="rotCat">Categoria</span><h2 id="ben-t"><span class="marcador" style="background:var(--c-ben)"></span><span data-t="mBen">Benefícios</span></h2><p data-t="pBen">O que a empresa oferece além do salário. Clique para ver quem tem direito e como usar.</p></div>
+      <div class="filtro-unidade" id="filtro-unidade" role="group" aria-labelledby="filtro-t"><span id="filtro-t" data-t="verPara">Ver para:</span></div>
+    </div>
+    <div class="grade" id="grade-ben"></div>
+  </section>
+
+  <section class="secao miolo" id="programas" data-secao="programas" data-secao-nome="Programas" aria-labelledby="prog-t">
+    <div class="cabeca"><div><span class="rotulo" data-t="rotCat">Categoria</span><h2 id="prog-t"><span class="marcador" style="background:var(--c-prog)"></span><span data-t="mProg">Programas</span></h2><p data-t="pProg">Iniciativas para crescer, aprender e cuidar da família.</p></div></div>
+    <div class="grade" id="grade-prog"></div>
+  </section>
+
+  <section class="secao miolo" id="politicas" data-secao="politicas" data-secao-nome="Políticas de RH" aria-labelledby="pol-t">
+    <div class="cabeca"><div><span class="rotulo" data-t="rotCat">Categoria</span><h2 id="pol-t"><span class="marcador" style="background:var(--c-pol)"></span><span data-t="mPol">Políticas de RH</span></h2><p data-t="pPol">As regras que valem para todos, em linguagem direta.</p></div></div>
+    <div class="grade" id="grade-pol"></div>
+  </section>
+
+  <section class="secao miolo" id="dp" data-secao="dp" data-secao-nome="Departamento Pessoal" aria-labelledby="dp-t">
+    <div class="cabeca"><div><span class="rotulo" data-t="rotCat">Categoria</span><h2 id="dp-t"><span class="marcador" style="background:var(--c-dp)"></span><span data-t="mDp">Departamento Pessoal</span></h2><p data-t="pDp">Folha, férias e ponto: o que fazer e até quando.</p></div></div>
+    <div class="grade" id="grade-dp"></div>
+  </section>
+
+  <section class="secao miolo" id="pessoas" data-secao="pessoas" data-secao-nome="Pessoas (aniversários e tempo de casa)" aria-labelledby="pes-t">
+    <div class="cabeca"><div><span class="rotulo" data-t="mPes">Pessoas</span><h2 id="pes-t" data-t="tPes">Quem comemora este mês</h2></div></div>
+    <div class="pessoas">
+      <div class="painel"><div class="painel-cab"><h3 id="aniv-t"></h3></div><div class="aniv" id="aniv"></div></div>
+      <div class="painel"><div class="painel-cab"><h3 data-t="tempoCasa">Tempo de casa</h3></div><ul class="casa" id="casa"></ul></div>
+    </div>
+  </section>
+
+  <section class="secao miolo" id="contato" data-secao="contato" data-secao-nome="Fale com o RH" aria-labelledby="cont-t">
+    <div class="cabeca"><div><span class="rotulo" data-t="mCont">Fale com o RH</span><h2 id="cont-t" data-t="tCont">Quem procurar para cada assunto</h2></div></div>
+    <div class="contatos" id="contatos"></div>
+    <div class="chamada"><p><b data-t="naoAchou">Não achou o que procurava?</b> <span data-t="naoAchou2">Abra um chamado e o RH responde em até 2 dias úteis.</span></p><button class="botao cheio" type="button" data-abre-chamado data-t="abrirChamado">Abrir chamado</button></div>
+  </section>
+</main>
+
+<footer><div class="miolo"><span data-t="rodape1">C. &amp; Paoli corp. · Portal do Colaborador</span><span><span data-t="rodape2">Projeto de portfólio: empresa, pessoas e dados fictícios.</span> · <button type="button" data-abre-admin data-t="personalizar">Personalizar</button></span></div></footer>
+
+<!-- POPUP: cartão do item (mesma anatomia para todos: o que é, quem tem direito, como usar) -->
+<dialog id="dlg-item" aria-labelledby="item-titulo" data-lugar="Janela do cartão">
+  <div class="card-topo" id="item-topo">
+    <span class="cat" id="item-cat"></span>
+    <h2 id="item-titulo"></h2>
+    <p id="item-resumo"></p>
+    <button class="fechar" type="button" data-fecha aria-label="Fechar">×</button>
+  </div>
+  <div class="card-corpo">
+    <div class="bloco"><h3 data-t="oQue">O que é</h3><p id="item-oque"></p></div>
+    <div class="bloco"><h3 data-t="quem">Quem tem direito</h3><div class="unidades" id="item-quem"></div></div>
+    <div class="bloco"><h3 data-t="como">Como usar</h3><ol class="passos" id="item-como"></ol></div>
+    <div class="bloco"><h3 data-t="duvidas">Dúvidas</h3><p id="item-duvidas"></p></div>
+    <div class="card-acoes">
+      <button class="botao cheio" type="button" id="item-pdf" data-t="baixarCard">Baixar card em PDF</button>
+      <button class="botao" type="button" id="item-link" data-t="copiarLink">Copiar link</button>
+    </div>
+  </div>
+</dialog>
+
+<!-- POPUP: abrir chamado -->
+<dialog id="dlg-chamado" aria-labelledby="chamado-t" data-lugar="Janela do chamado">
+  <div class="dlg-topo"><h2 id="chamado-t" style="font-size:19px" data-t="abrirChamado">Abrir chamado</h2><button class="fechar" type="button" data-fecha aria-label="Fechar">×</button></div>
+  <div class="dlg-corpo" id="chamado-corpo">
+    <form id="form-chamado" novalidate style="display:flex;flex-direction:column;gap:14px">
+      <div class="dupla">
+        <div class="campo"><label for="c-assunto" data-t="assunto">Assunto</label><select id="c-assunto"></select></div>
+        <div class="campo"><label for="c-unidade" data-t="unidade">Unidade</label><select id="c-unidade"></select></div>
+      </div>
+      <div class="campo"><label for="c-texto" data-t="descreva">Descreva o que precisa</label><textarea id="c-texto" data-t-ph="descrevaPh"></textarea><span class="erro" id="e-texto"></span></div>
+      <div class="campo"><label for="c-anexo" data-t="anexo">Anexo (opcional)</label><input id="c-anexo" type="file" accept=".pdf,.jpg,.jpeg,.png"><span class="dica" data-t="anexoDica">PDF ou imagem, até 5 MB. Não envie atestado aqui: use o app de ponto.</span><span class="erro" id="e-anexo"></span></div>
+      <button class="botao cheio" type="submit" style="justify-content:center;padding:11px" data-t="enviar">Enviar chamado</button>
+    </form>
+  </div>
+</dialog>
+
+<div class="toast" id="toast" role="status"></div>
+
+<!--
+  CONFIGURAÇÃO. Em produção, "usuario" viria do login (Microsoft Graph /me) e o resto de listas
+  do SharePoint ou de uma API. Datas no formato AAAA-MM-DD.
+-->
+<script type="application/json" id="config">
+{
+  "usuario": {"nome": "Mariana Couto", "cargo": {"pt": "Analista de Logística", "en": "Logistics Analyst"}, "unidade": "cd"},
+  "unidades": {
+    "mat": {"pt": "Matriz", "en": "Head office", "cor": "--u-mat"},
+    "fab": {"pt": "Fábrica", "en": "Plant", "cor": "--u-fab"},
+    "cd":  {"pt": "Centro de Distribuição", "en": "Distribution center", "cor": "--u-cd"},
+    "rem": {"pt": "Remoto", "en": "Remote", "cor": "--u-rem"}
+  },
+  "pagamento": {"regra": "primeiro_dia_util", "adiantamentoDia": 20},
+  "feriados": [
+    ["2026-01-01", "Confraternização Universal", "New Year's Day"], ["2026-02-16", "Carnaval", "Carnival"], ["2026-02-17", "Carnaval", "Carnival"],
+    ["2026-04-03", "Sexta-feira Santa", "Good Friday"], ["2026-04-21", "Tiradentes", "Tiradentes Day"], ["2026-05-01", "Dia do Trabalho", "Labour Day"],
+    ["2026-06-04", "Corpus Christi", "Corpus Christi"], ["2026-09-07", "Independência", "Independence Day"], ["2026-10-12", "Nossa Senhora Aparecida", "Our Lady of Aparecida"],
+    ["2026-11-02", "Finados", "All Souls' Day"], ["2026-11-15", "Proclamação da República", "Republic Day"], ["2026-11-20", "Consciência Negra", "Black Awareness Day"],
+    ["2026-12-25", "Natal", "Christmas"],
+    ["2027-01-01", "Confraternização Universal", "New Year's Day"], ["2027-02-08", "Carnaval", "Carnival"], ["2027-02-09", "Carnaval", "Carnival"],
+    ["2027-03-26", "Sexta-feira Santa", "Good Friday"], ["2027-04-21", "Tiradentes", "Tiradentes Day"], ["2027-05-01", "Dia do Trabalho", "Labour Day"]
+  ],
+  "eventos": [
+    {"data": "2026-10-06", "u": "geral", "pt": "Abertura das inscrições: bolsa de idiomas", "en": "Language grant: applications open"},
+    {"data": "2026-10-23", "u": "fab", "pt": "SIPAT: abertura", "en": "Safety week: opening"},
+    {"data": "2026-10-27", "u": "mat", "pt": "Outubro Rosa: palestra", "en": "Pink October: talk"},
+    {"data": "2026-10-30", "u": "geral", "pt": "Prazo da avaliação de desempenho", "en": "Performance review deadline"},
+    {"data": "2026-11-10", "u": "cd", "pt": "Vacinação contra gripe", "en": "Flu vaccination"},
+    {"data": "2026-11-11", "u": "fab", "pt": "Vacinação contra gripe", "en": "Flu vaccination"},
+    {"data": "2026-11-18", "u": "rem", "pt": "Café virtual com a diretoria", "en": "Virtual coffee with leadership"},
+    {"data": "2026-11-25", "u": "mat", "pt": "Novembro Azul: palestra", "en": "Movember: talk"},
+    {"data": "2026-11-30", "u": "geral", "pt": "13º salário: 1ª parcela", "en": "13th salary: 1st instalment"},
+    {"data": "2026-12-11", "u": "geral", "pt": "Confraternização de fim de ano", "en": "Year-end party"},
+    {"data": "2026-12-18", "u": "geral", "pt": "13º salário: 2ª parcela", "en": "13th salary: 2nd instalment"}
+  ],
+  "clima": {"temp": 24, "pt": "Parcialmente nublado · São Paulo", "en": "Partly cloudy · São Paulo"},
+  "atalhos": [
+    {"icone": "doc", "pt": "Holerite", "en": "Payslip", "url": ""},
+    {"icone": "sol", "pt": "Férias", "en": "Time off", "url": ""},
+    {"icone": "relogio", "pt": "Ponto", "en": "Timesheet", "url": ""},
+    {"icone": "cartao", "pt": "App de benefícios", "en": "Benefits app", "url": ""},
+    {"icone": "maleta", "pt": "Vagas internas", "en": "Internal jobs", "url": ""},
+    {"icone": "capelo", "pt": "Universidade", "en": "Learning", "url": ""},
+    {"icone": "arvore", "pt": "Organograma", "en": "Org chart", "url": ""},
+    {"icone": "balao", "pt": "Abrir chamado", "en": "Open a ticket", "acao": "chamado"}
+  ],
+  "contatos": [
+    {"assunto": {"pt": "Benefícios", "en": "Benefits"}, "nome": "Rafael Antunes", "foto": "", "papel": {"pt": "Analista de Benefícios", "en": "Benefits Analyst"}, "email": "beneficios@cpaoli.example"},
+    {"assunto": {"pt": "Folha e ponto", "en": "Payroll and time"}, "nome": "Sueli Ramos", "foto": "", "papel": {"pt": "Coordenadora de DP", "en": "Payroll Coordinator"}, "email": "dp@cpaoli.example"},
+    {"assunto": {"pt": "Vagas e indicações", "en": "Jobs and referrals"}, "nome": "Bianca Torres", "foto": "", "papel": {"pt": "Recrutadora", "en": "Recruiter"}, "email": "vagas@cpaoli.example"},
+    {"assunto": {"pt": "Treinamento", "en": "Learning"}, "nome": "Diego Faria", "foto": "", "papel": {"pt": "Analista de T&D", "en": "L&D Analyst"}, "email": "universidade@cpaoli.example"},
+    {"assunto": {"pt": "Business partner", "en": "Business partner"}, "nome": "Lívia Cardoso", "foto": "", "papel": {"pt": "BP do CD e da Fábrica", "en": "BP for DC and Plant"}, "email": "bp.operacoes@cpaoli.example"},
+    {"assunto": {"pt": "Ética e conduta", "en": "Ethics and conduct"}, "nome": "Canal de ética", "foto": "", "papel": {"pt": "Atendimento sigiloso, 24 h", "en": "Confidential, 24/7"}, "email": "etica@cpaoli.example"}
+  ],
+  "aniversarios": [
+    ["Ana Lúcia Prado", "fab", "10-03"], ["Thiago Moreira", "cd", "10-09"], ["Juliana Reis", "mat", "10-14"],
+    ["Paulo Henrique Lima", "rem", "10-21"], ["Camila Duarte", "cd", "10-26"], ["Roberto Siqueira", "fab", "10-30"]
+  ],
+  "tempoCasa": [["Márcia Fontes", "mat", 15], ["Eduardo Paiva", "fab", 10], ["Renata Lopes", "cd", 5]],
+  "avisos": [
+    {"data": "2026-10-20", "u": "geral", "pt": ["Avaliação de desempenho fecha dia 30", "Faça a sua autoavaliação e confirme as metas de 2027 com o seu gestor."], "en": ["Performance review closes on the 30th", "Complete your self-review and agree 2027 goals with your manager."]},
+    {"data": "2026-10-16", "u": "cd", "pt": ["Vacinação contra gripe no CD", "Dia 10/11, das 8h às 16h, no refeitório. Leve um documento com foto."], "en": ["Flu vaccination at the DC", "Nov 10, 8am to 4pm, in the cafeteria. Bring a photo ID."]},
+    {"data": "2026-10-09", "u": "geral", "pt": ["Novo parceiro no clube", "Rede de farmácias com 15% de desconto em medicamentos de uso contínuo."], "en": ["New partner in the club", "Pharmacy chain with 15% off long-term medication."]}
+  ],
+  "chamadoEndpoint": ""
+}
+</script>
+
+<!--
+  CONTEÚDO DOS CARTÕES. Cada item tem a mesma anatomia: resumo, o que é, quem tem direito (unidades),
+  como usar (passos) e a quem perguntar (índice em config.contatos). Para adicionar um item, copie um bloco.
+-->
+<script type="application/json" id="itens">
+[
+  {"id": "plano-de-saude", "cat": "ben", "icone": "saude", "quem": ["mat","fab","cd","rem"], "contato": 0,
+   "pt": {"t": "Plano de saúde", "r": "Rede nacional, sem mensalidade para você.", "o": "Plano com cobertura nacional, quarto coletivo e coparticipação de 20% em consultas e exames, com teto mensal de R$ 150. Dependentes podem entrar com desconto em folha.", "c": ["Peça a inclusão pelo app de benefícios em até 30 dias da admissão.", "Baixe a carteirinha digital no app da operadora.", "Para incluir dependente, envie a certidão pelo app."]},
+   "en": {"t": "Health plan", "r": "Nationwide network, no monthly fee for you.", "o": "Nationwide plan, shared room, 20% co-payment on appointments and tests capped at R$ 150 a month. Dependants can join through payroll deduction.", "c": ["Request enrolment in the benefits app within 30 days of hiring.", "Download the digital card in the insurer's app.", "To add a dependant, upload the certificate in the app."]}},
+  {"id": "plano-odontologico", "cat": "ben", "icone": "dente", "quem": ["mat","fab","cd","rem"], "contato": 0,
+   "pt": {"t": "Plano odontológico", "r": "Opcional, com custo baixo descontado em folha.", "o": "Cobre limpeza, restauração, canal e extração. Ortodontia tem plano à parte. Valor de R$ 18 por pessoa ao mês.", "c": ["Faça a adesão pelo app de benefícios.", "A cobertura começa no primeiro dia do mês seguinte."]},
+   "en": {"t": "Dental plan", "r": "Optional, low cost deducted from payroll.", "o": "Covers cleaning, fillings, root canal and extraction. Orthodontics is a separate plan. R$ 18 per person a month.", "c": ["Join through the benefits app.", "Coverage starts on the first day of the following month."]}},
+  {"id": "vale-refeicao", "cat": "ben", "icone": "prato", "quem": ["mat","cd","rem"], "contato": 0,
+   "pt": {"t": "Vale-refeição e alimentação", "r": "R$ 1.050 por mês, divididos como você quiser.", "o": "Crédito mensal num cartão flexível: você escolhe quanto vai para refeição e quanto para mercado. Na Fábrica, há refeitório no lugar do vale-refeição.", "c": ["O crédito cai no último dia útil do mês.", "Ajuste a divisão no app até o dia 20."]},
+   "en": {"t": "Meal and food allowance", "r": "R$ 1,050 a month, split as you like.", "o": "Monthly credit on a flexible card: you choose how much goes to meals and how much to groceries. The Plant has a cafeteria instead of the meal allowance.", "c": ["Credit arrives on the last business day of the month.", "Change the split in the app by the 20th."]}},
+  {"id": "seguro-de-vida", "cat": "ben", "icone": "escudo", "quem": ["mat","fab","cd","rem"], "contato": 0,
+   "pt": {"t": "Seguro de vida", "r": "24 salários de cobertura, pago pela empresa.", "o": "Seguro em grupo com indenização de 24 salários em caso de morte ou invalidez. Você indica os beneficiários.", "c": ["Indique ou troque os beneficiários no app de benefícios.", "Em caso de sinistro, fale com o RH: ajudamos com a papelada."]},
+   "en": {"t": "Life insurance", "r": "24 salaries of cover, paid by the company.", "o": "Group policy paying 24 salaries in case of death or disability. You choose the beneficiaries.", "c": ["Name or change beneficiaries in the benefits app.", "If a claim happens, contact HR: we help with the paperwork."]}},
+  {"id": "academia", "cat": "ben", "icone": "haltere", "quem": ["mat","fab","cd","rem"], "contato": 0,
+   "pt": {"t": "Academia e bem-estar", "r": "Acesso a academias e apps a partir de R$ 29.", "o": "Plataforma com milhares de academias, estúdios e apps de meditação e nutrição. A empresa paga parte do plano.", "c": ["Cadastre-se com o e-mail corporativo.", "Escolha o plano: o valor é descontado em folha."]},
+   "en": {"t": "Gym and wellbeing", "r": "Gyms and apps from R$ 29.", "o": "Platform with thousands of gyms, studios and meditation and nutrition apps. The company pays part of the plan.", "c": ["Sign up with your work e-mail.", "Pick a plan: the cost is deducted from payroll."]}},
+  {"id": "clube-de-parcerias", "cat": "ben", "icone": "etiqueta", "quem": ["mat","fab","cd","rem"], "contato": 0,
+   "pt": {"t": "Clube de parcerias", "r": "Descontos em farmácias, escolas e serviços.", "o": "Mais de 80 parceiros com desconto para você e a família. A lista é atualizada todo mês.", "c": ["Abra o clube pelo app de benefícios.", "Mostre o cupom ou o crachá no parceiro."]},
+   "en": {"t": "Partner club", "r": "Discounts at pharmacies, schools and services.", "o": "Over 80 partners offering discounts to you and your family. The list is updated monthly.", "c": ["Open the club from the benefits app.", "Show the coupon or your badge at the partner."]}},
+  {"id": "mentoria", "cat": "prog", "icone": "mentoria", "quem": ["mat","fab","cd","rem"], "contato": 3,
+   "pt": {"t": "Programa de mentoria", "r": "Seis meses com um mentor de outra área.", "o": "Encontros quinzenais com um mentor escolhido pelo seu objetivo de carreira. Turmas abrem em março e setembro.", "c": ["Inscreva-se na Universidade quando a turma abrir.", "Combine o plano de encontros no primeiro mês."]},
+   "en": {"t": "Mentoring programme", "r": "Six months with a mentor from another area.", "o": "Fortnightly meetings with a mentor matched to your career goal. Cohorts open in March and September.", "c": ["Apply in the Learning platform when the cohort opens.", "Agree the meeting plan in the first month."]}},
+  {"id": "bolsa-de-estudos", "cat": "prog", "icone": "livro", "quem": ["mat","fab","cd","rem"], "contato": 3,
+   "pt": {"t": "Bolsa de estudos e idiomas", "r": "Até 50% de graduação, pós ou idiomas.", "o": "Apoio para cursos ligados à sua função ou ao plano de carreira. Exige 12 meses de casa e aprovação do gestor.", "c": ["Peça a aprovação do gestor.", "Envie a matrícula pela Universidade até o dia 10.", "O reembolso entra na folha seguinte."]},
+   "en": {"t": "Education and language grant", "r": "Up to 50% of degree, postgraduate or language courses.", "o": "Support for courses tied to your role or career plan. Requires 12 months of service and manager approval.", "c": ["Get your manager's approval.", "Upload your enrolment in Learning by the 10th.", "Reimbursement comes in the next payroll."]}},
+  {"id": "indicacao-premiada", "cat": "prog", "icone": "indica", "quem": ["mat","fab","cd","rem"], "contato": 2,
+   "pt": {"t": "Indicação premiada", "r": "R$ 1.000 por indicação contratada.", "o": "Indique pessoas para vagas abertas. Se a pessoa for contratada e passar da experiência, você recebe o prêmio na folha.", "c": ["Veja as vagas em Vagas internas.", "Envie o currículo pelo botão Indicar.", "O prêmio sai após 90 dias da contratação."]},
+   "en": {"t": "Referral bonus", "r": "R$ 1,000 per hired referral.", "o": "Refer people to open roles. If they are hired and pass probation, you get the bonus in payroll.", "c": ["Check roles in Internal jobs.", "Send the CV with the Refer button.", "The bonus is paid 90 days after hiring."]}},
+  {"id": "parentalidade", "cat": "prog", "icone": "bebe", "quem": ["mat","fab","cd","rem"], "contato": 4,
+   "pt": {"t": "Parentalidade", "r": "Licença estendida e apoio na volta.", "o": "Licença-maternidade de 180 dias e paternidade de 20 dias, auxílio-creche até 24 meses e retorno gradual nas duas primeiras semanas.", "c": ["Avise o RH com 30 dias de antecedência.", "Envie a certidão de nascimento pelo app de ponto.", "Combine o retorno gradual com o gestor."]},
+   "en": {"t": "Parenthood", "r": "Extended leave and support when you return.", "o": "180-day maternity and 20-day paternity leave, childcare allowance up to 24 months and a gradual return in the first two weeks.", "c": ["Tell HR 30 days in advance.", "Upload the birth certificate in the timesheet app.", "Agree the gradual return with your manager."]}},
+  {"id": "trabalho-hibrido", "cat": "pol", "icone": "casa", "quem": ["mat","rem"], "contato": 4,
+   "pt": {"t": "Trabalho híbrido", "r": "Até 3 dias remotos por semana na Matriz.", "o": "Na Matriz, cada time combina os dias presenciais. Quem é contratado como remoto tem auxílio de R$ 120 por mês para internet e energia.", "c": ["Combine os dias com o gestor.", "Registre no ponto a modalidade do dia."]},
+   "en": {"t": "Hybrid work", "r": "Up to 3 remote days a week at Head office.", "o": "At Head office each team agrees its office days. Remote hires get R$ 120 a month for internet and power.", "c": ["Agree the days with your manager.", "Log the work mode in the timesheet."]}},
+  {"id": "viagens", "cat": "pol", "icone": "aviao", "quem": ["mat","fab","cd","rem"], "contato": 4,
+   "pt": {"t": "Viagens a trabalho", "r": "Como pedir, reservar e prestar contas.", "o": "Passagens e hotéis são reservados pela agência da empresa. Diária de alimentação de R$ 110, sem necessidade de nota abaixo desse valor.", "c": ["Peça a viagem com 7 dias de antecedência.", "Guarde os comprovantes acima da diária.", "Preste contas em até 5 dias após a volta."]},
+   "en": {"t": "Business travel", "r": "How to request, book and report expenses.", "o": "Flights and hotels are booked by the company's agency. Meal per diem of R$ 110, no receipt needed below that amount.", "c": ["Request the trip 7 days ahead.", "Keep receipts above the per diem.", "Submit expenses within 5 days of returning."]}},
+  {"id": "codigo-de-conduta", "cat": "pol", "icone": "balanca", "quem": ["mat","fab","cd","rem"], "contato": 5,
+   "pt": {"t": "Código de conduta", "r": "Como agimos e como denunciar com sigilo.", "o": "Reúne as regras de respeito, conflito de interesses, presentes e uso de informação. O canal de ética aceita relatos anônimos.", "c": ["Leia o código e confirme a leitura na Universidade.", "Para relatar algo, use o canal de ética: o anonimato é garantido."]},
+   "en": {"t": "Code of conduct", "r": "How we act and how to report confidentially.", "o": "Rules on respect, conflicts of interest, gifts and use of information. The ethics line accepts anonymous reports.", "c": ["Read the code and confirm it in Learning.", "To report something, use the ethics line: anonymity is guaranteed."]}},
+  {"id": "holerite", "cat": "dp", "icone": "doc", "quem": ["mat","fab","cd","rem"], "contato": 1,
+   "pt": {"t": "Holerite e informe de rendimentos", "r": "Disponíveis no app a partir do dia do pagamento.", "o": "O holerite sai todo mês no primeiro dia útil. O informe de rendimentos para o imposto de renda sai até o fim de fevereiro.", "c": ["Abra o app de folha com o login da rede.", "Baixe o PDF do mês ou do ano."]},
+   "en": {"t": "Payslip and income statement", "r": "Available in the app from payday.", "o": "Payslips come out on the first business day of each month. The annual income statement for tax is out by the end of February.", "c": ["Open the payroll app with your network login.", "Download the PDF for the month or year."]}},
+  {"id": "ferias", "cat": "dp", "icone": "sol", "quem": ["mat","fab","cd","rem"], "contato": 1,
+   "pt": {"t": "Férias", "r": "Peça com 45 dias de antecedência.", "o": "30 dias por ano, divisíveis em até 3 períodos (um deles com pelo menos 14 dias). O pagamento sai 2 dias antes do início.", "c": ["Combine as datas com o gestor.", "Faça o pedido no app de férias.", "Confira o aviso e o recibo no app."]},
+   "en": {"t": "Time off", "r": "Request 45 days in advance.", "o": "30 days a year, split into up to 3 periods (one of at least 14 days). Payment comes 2 days before you start.", "c": ["Agree dates with your manager.", "Request in the time-off app.", "Check the notice and receipt in the app."]}},
+  {"id": "ponto", "cat": "dp", "icone": "relogio", "quem": ["mat","fab","cd","rem"], "contato": 1,
+   "pt": {"t": "Ponto e banco de horas", "r": "Ajustes até o dia 25 de cada mês.", "o": "Horas extras vão para o banco de horas e vencem em 6 meses. Atestados entram pelo app de ponto em até 48 horas.", "c": ["Confira as marcações toda semana.", "Peça ajustes no app até o dia 25.", "Envie atestados pelo app em até 48 h."]},
+   "en": {"t": "Timesheet and hour bank", "r": "Adjustments by the 25th of each month.", "o": "Overtime goes to the hour bank and expires after 6 months. Medical certificates go through the timesheet app within 48 hours.", "c": ["Check your clock-ins every week.", "Request adjustments in the app by the 25th.", "Upload certificates in the app within 48 h."]}}
+]
+</script>
+
+<!-- PERSONALIZAÇÃO: o botão Salvar do modo admin grava aqui. {} = portal original. -->
+<script type="application/json" id="personalizacao" data-site="portal">{}</script>
+
+<!-- MODO ADMIN: o motor (o mesmo nos três projetos; para levar a outro site, copie este bloco) -->
+<script>
+/* =====================================================================================
+   MODO ADMIN · edita o site no navegador e salva um index.html novo.
+
+   Como funciona: o que for mudado (textos, listas, imagens, cores e ordem das seções) vira
+   um JSON pequeno, guardado no bloco <script id="personalizacao"> deste arquivo. Ao abrir a
+   página, esse JSON é aplicado por cima do conteúdo original.
+   Salvar = baixar o index.html com o JSON novo dentro. Publicar = trocar o arquivo do site por ele.
+
+   O que o site marca no HTML:
+     data-edit="chave"        texto editável
+     data-edit-lista="chave"  lista: adicionar, remover e mudar a ordem dos itens
+     data-img="chave"         imagem trocável (data-img-nome = nome que aparece no painel)
+     data-secao="id"          seção que muda de ordem ou some (data-secao-nome = nome no painel)
+     data-lugar="Nome"        nome de uma parte que não é seção (abertura, janela), para a lista de textos
+     data-abre-admin          botão que abre o modo admin (o endereço com #admin no fim também abre)
+   E chama Editor.iniciar({...}) no fim do próprio script. Dado que muda toda semana (preço,
+   comunicados) pode ganhar uma aba própria, desenhada pelo site (opção abas + Editor.gravarDados).
+
+   Não é segurança: sem servidor não existe senha. Qualquer pessoa abre o modo admin, mas o
+   site só muda de verdade quando o dono troca o arquivo publicado.
+   ===================================================================================== */
+(function () {
+  "use strict";
+  var $ = function (s, r) { return (r || document).querySelector(s); };
+  var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
+  var esc = function (s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); };
+  var tem = function (o, k) { return Object.prototype.hasOwnProperty.call(o, k); };
+
+  /* ---------- 1. Lê a personalização guardada no arquivo ---------- */
+  // P = o que a página mostra agora: o que está salvo no arquivo mais o que for editado nesta visita.
+  var bloco = document.getElementById("personalizacao");
+  var SITE = (bloco && bloco.getAttribute("data-site")) || "";
+  var P = { textos: {}, listas: {}, imagens: {}, secoes: { ordem: [], ocultas: [] }, tema: {}, dados: {} };
+  try {
+    var salvo = JSON.parse((bloco && bloco.textContent.trim()) || "{}");
+    Object.keys(P).forEach(function (k) { if (salvo[k]) P[k] = salvo[k]; });
+  } catch (e) { console.warn("Bloco #personalizacao com JSON inválido; usando o site original.", e); }
+  var mudou = false; // há edição que ainda não foi salva?
+
+  /* ---------- 2. Cores: variáveis CSS por cima das do site ---------- */
+  // Cada cor tem a versão do tema claro e a do escuro, do mesmo jeito que as variáveis do site.
+  var estiloCores = document.createElement("style");
+  document.head.appendChild(estiloCores);
+  function aplicarCores() {
+    var claro = [], escuro = [], cor = /^#[0-9a-f]{3,8}$/i;
+    Object.keys(P.tema).forEach(function (v) {
+      var c = P.tema[v];
+      if (!/^--[\w-]+$/.test(v)) return; // só aceita nome de variável CSS
+      if (cor.test(c.claro || "")) claro.push(v + ":" + c.claro);
+      if (cor.test(c.escuro || "")) escuro.push(v + ":" + c.escuro);
+    });
+    var e = escuro.join(";");
+    estiloCores.textContent = (claro.length ? ":root{" + claro.join(";") + "}" : "") +
+      (e ? '@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){' + e + '}}:root[data-theme="dark"]{' + e + "}" : "");
+  }
+  aplicarCores();
+
+  /* ---------- 3. Limpeza do texto editado ---------- */
+  // Por quê: o editor do navegador às vezes cria estilos e marcas estranhas. Só passa formatação
+  // simples (negrito, itálico, link, listas) e o básico de SVG dos ícones; nada de script nem de on*.
+  var TAGS = /^(B|STRONG|EM|I|BR|SPAN|SMALL|A|UL|OL|LI|P|TR|TD|TH|DIV|DL|DT|DD|svg|path|circle|rect|line|polyline|polygon|g)$/;
+  var ATRIBUTOS = /^(class|href|target|rel|scope|viewBox|d|cx|cy|r|x|y|x1|y1|x2|y2|width|height|rx|points|fill|stroke|stroke-width|stroke-linecap|stroke-linejoin|opacity|aria-hidden)$/;
+  function limpar(html) {
+    var t = document.createElement("template");
+    t.innerHTML = html;
+    (function andar(no) {
+      Array.prototype.slice.call(no.childNodes).forEach(function (f) {
+        if (f.nodeType === 3) return;                  // texto: fica
+        if (f.nodeType !== 1) { f.remove(); return; }  // comentário e afins: sai
+        andar(f);
+        // marca fora da lista: sai a marca, fica o texto de dentro
+        if (!TAGS.test(f.tagName)) { while (f.firstChild) f.parentNode.insertBefore(f.firstChild, f); f.remove(); return; }
+        Array.prototype.slice.call(f.attributes).forEach(function (a) {
+          var linkRuim = a.name === "href" && !/^(https?:|#|mailto:|tel:)/i.test(a.value.trim());
+          if (!ATRIBUTOS.test(a.name) || linkRuim) f.removeAttribute(a.name);
+        });
+      });
+    })(t.content);
+    return t.innerHTML.trim();
+  }
+
+  /* ---------- 4. Aplicar a personalização na página ---------- */
+  var O = {};                             // opções que o site passa em Editor.iniciar
+  var ORIG = { listas: {}, secoes: [] };  // conteúdo original, para os botões "Original"
+
+  function aplicarTextos() {
+    // site que desenha os próprios textos (ex.: o portal bilíngue) usa aplicar: false e lê Editor.texto()
+    if (!O.textos || !O.textos.aplicar) return;
+    $$(O.textos.seletor).forEach(function (el) {
+      var k = O.textos.chave(el);
+      if (tem(P.textos, k)) el.innerHTML = O.textos.puro ? esc(P.textos[k]) : limpar(P.textos[k]);
+      else if (el.__original != null) el.innerHTML = el.__original;
+    });
+  }
+  function aplicarListas() {
+    $$("[data-edit-lista]").forEach(function (el) {
+      var k = el.getAttribute("data-edit-lista");
+      el.innerHTML = tem(P.listas, k) ? limpar(P.listas[k]) : ORIG.listas[k];
+    });
+  }
+  function aplicarImagens() {
+    $$("[data-img]").forEach(function (el) {
+      var nova = P.imagens[el.getAttribute("data-img")], o = el.__original;
+      if (!o) return;
+      // contêiner com desenho (ex.: logo em SVG): a imagem nova entra no lugar do desenho
+      if (el.tagName !== "IMG") { el.innerHTML = nova ? '<img class="ed-logo-img" alt="" src="' + esc(nova) + '">' : o.html; return; }
+      if (nova) { el.src = nova; el.removeAttribute("srcset"); el.hidden = false; return; }
+      if (o.src) el.setAttribute("src", o.src); else el.removeAttribute("src");
+      if (o.srcset) el.setAttribute("srcset", o.srcset);
+      if (el.hasAttribute("data-img-opcional")) el.hidden = true; // imagem opcional sem foto: some
+    });
+  }
+  function aplicarSecoes() {
+    var els = $$("[data-secao]");
+    if (!els.length) return;
+    var porId = {};
+    els.forEach(function (e) { porId[e.getAttribute("data-secao")] = e; });
+    // primeiro a ordem salva; seção que não está nela fica na ordem original
+    var ordem = P.secoes.ordem.filter(function (id) { return porId[id]; });
+    ORIG.secoes.forEach(function (id) { if (ordem.indexOf(id) < 0) ordem.push(id); });
+    var pai = els[0].parentNode, depois = els[els.length - 1].nextSibling;
+    ordem.forEach(function (id) { pai.insertBefore(porId[id], depois); });
+    els.forEach(function (e) { e.hidden = P.secoes.ocultas.indexOf(e.getAttribute("data-secao")) >= 0; });
+    // o menu acompanha: mesma ordem, e o link da seção escondida some
+    ((O.secoes && O.secoes.menus) || []).forEach(function (seletor) {
+      $$(seletor).forEach(function (menu) {
+        var links = $$("a[href^='#']", menu).filter(function (a) { return porId[a.getAttribute("href").slice(1)]; });
+        if (!links.length) return;
+        var ref = links[links.length - 1].nextSibling;
+        ordem.forEach(function (id) { links.forEach(function (a) { if (a.getAttribute("href") === "#" + id) menu.insertBefore(a, ref); }); });
+        links.forEach(function (a) { a.hidden = P.secoes.ocultas.indexOf(a.getAttribute("href").slice(1)) >= 0; });
+      });
+    });
+  }
+  // o site pode redesenhar o que depende do conteúdo (contadores, tradução) depois de cada mudança
+  function avisarSite() { if (O.aoMudar) { try { O.aoMudar(); } catch (e) { console.error(e); } } }
+  function aplicarTudo() { aplicarCores(); aplicarTextos(); aplicarListas(); aplicarImagens(); aplicarSecoes(); avisarSite(); }
+  // toda edição passa por aqui: acende o aviso de "não salvo" no botão Salvar
+  function marcar() { mudou = true; atualizarSalvar(); }
+
+  /* ---------- 5. Painel ---------- */
+  var painel, corpo, msg, abaAtual, aberto = false;
+  var ABAS = { textos: abaTextos, imagens: abaImagens, cores: abaCores, secoes: abaSecoes };
+  function montarPainel() {
+    // abas do site primeiro (o que muda toda semana); das outras, só aparece a que tem o que editar neste site
+    var abas = (O.abas || []).map(function (a, i) {
+      ABAS["site" + i] = function () { var div = document.createElement("div"); corpo.appendChild(div); a.desenhar(div); };
+      return ["site" + i, a.nome, true];
+    }).concat([["textos", "Textos", !!O.textos], ["imagens", "Imagens", !!$("[data-img]")],
+      ["cores", "Cores", !!(O.tema && O.tema.length)], ["secoes", "Seções", !!$("[data-secao]")]]).filter(function (a) { return a[2]; });
+    abaAtual = abas[0][0];
+    painel = document.createElement("aside");
+    painel.id = "ed-painel"; painel.className = "ed"; painel.hidden = true;
+    painel.setAttribute("aria-label", "Modo admin");
+    painel.innerHTML =
+      '<div class="ed-cab"><b>Modo admin</b>' +
+      '<button type="button" class="ed-bt pri" data-ed="salvar" title="Baixa o index.html com as mudanças (Ctrl+S)">Salvar</button>' +
+      '<button type="button" class="ed-bt" data-ed="sair">Sair</button></div>' +
+      '<div class="ed-abas" role="tablist">' + abas.map(function (a) { return '<button type="button" role="tab" data-aba="' + a[0] + '">' + a[1] + "</button>"; }).join("") + "</div>" +
+      '<div class="ed-msg" role="status" hidden></div>' +
+      '<div class="ed-corpo" role="tabpanel"></div>' +
+      '<p class="ed-rodape">Salvar baixa o index.html com as mudanças. Para publicar, troque o arquivo do site por ele.</p>';
+    document.body.appendChild(painel);
+    corpo = $(".ed-corpo", painel);
+    msg = $(".ed-msg", painel);
+    painel.addEventListener("click", function (e) {
+      var aba = e.target.closest("[data-aba]");
+      if (aba) mostrarAba(aba.getAttribute("data-aba"));
+      if (e.target.closest('[data-ed="salvar"]')) salvar();
+      if (e.target.closest('[data-ed="sair"]')) fechar();
+    });
+  }
+  function mostrarAba(aba) {
+    abaAtual = aba;
+    $$("[data-aba]", painel).forEach(function (b) { b.setAttribute("aria-selected", b.getAttribute("data-aba") === aba); });
+    corpo.innerHTML = "";
+    corpo.scrollTop = 0;
+    ABAS[aba]();
+  }
+  function mensagem(texto, erro) {
+    msg.hidden = false;
+    msg.className = "ed-msg" + (erro ? " erro" : "");
+    msg.textContent = texto;
+    clearTimeout(msg.timer);
+    msg.timer = setTimeout(function () { msg.hidden = true; }, 8000);
+  }
+  function atualizarSalvar() { if (painel) $('[data-ed="salvar"]', painel).textContent = mudou ? "Salvar ●" : "Salvar"; }
+  function abrir() {
+    if (!painel) montarPainel();
+    aberto = true;
+    painel.hidden = false;
+    document.documentElement.classList.add("ed-modo");
+    ligarEdicao(true);
+    mostrarAba(abaAtual);
+    atualizarSalvar();
+  }
+  function fechar() {
+    // sair não desfaz nada: o que foi editado continua na tela até salvar ou recarregar
+    aberto = false;
+    painel.hidden = true;
+    document.documentElement.classList.remove("ed-modo");
+    ligarEdicao(false);
+    esconderFlutuantes();
+    if (location.hash === "#admin") history.replaceState(null, "", location.pathname + location.search);
+  }
+
+  /* --- aba Textos: agrupada pelo lugar da página (e dá para clicar direto no texto) --- */
+  // Por quê: quem edita reconhece "Menu" ou "Rodapé", não o nome técnico do texto.
+  // O lugar é o nome da seção (data-secao-nome), o data-lugar que o site deu, ou Menu, Topo, Rodapé.
+  function lugarDe(el) {
+    var nomeado = el.closest("[data-lugar],[data-secao-nome]");
+    if (nomeado) return nomeado.getAttribute("data-lugar") || nomeado.getAttribute("data-secao-nome");
+    var parte = el.closest("nav,header,footer");
+    return parte ? { NAV: "Menu", HEADER: "Topo", FOOTER: "Rodapé" }[parte.tagName] : "Outros textos";
+  }
+  function tipoDe(el) {
+    if (!el) return "Texto";
+    if (/^H[1-6]$/.test(el.tagName)) return "Título";
+    if (el.closest("nav")) return "Link do menu";
+    if (el.closest("a,button")) return "Botão ou link";
+    if (/^(INPUT|TEXTAREA)$/.test(el.tagName)) return "Dica dentro do campo";
+    if (el.closest("label")) return "Nome do campo";
+    return "Texto";
+  }
+  function listaTextos() {
+    // site bilíngue manda a própria lista: { chave, original, el (elemento na página ou null), lugar (se não houver el) }
+    var lista = O.textos.lista ? O.textos.lista() : [], vistos = {};
+    if (!O.textos.lista) $$(O.textos.seletor).forEach(function (el) {
+      var k = O.textos.chave(el);
+      if (vistos[k]) return;
+      vistos[k] = true;
+      var tmp = document.createElement("div");
+      tmp.innerHTML = el.__original != null ? el.__original : el.innerHTML;
+      lista.push({ chave: k, el: el, original: tmp.textContent.trim() });
+    });
+    // na ordem em que aparecem na página; texto que só o JavaScript escreve vai para o fim
+    var naPagina = lista.filter(function (t) { return t.el; }).sort(function (a, b) {
+      return a.el.compareDocumentPosition(b.el) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1;
+    });
+    return naPagina.concat(lista.filter(function (t) { return !t.el; }));
+  }
+  function abaTextos() {
+    var nota = typeof O.textos.nota === "function" ? O.textos.nota() : O.textos.nota;
+    var div = document.createElement("div");
+    div.innerHTML = '<p class="ed-dica">Clique num texto da página para editar ali mesmo, ou use a lista. Botões e links se editam pela lista.' +
+      (nota ? " " + esc(nota) : "") + "</p>" +
+      '<input type="search" placeholder="Buscar texto" data-ed="busca"><div data-ed="lista"></div>';
+    corpo.appendChild(div);
+    var lista = $('[data-ed="lista"]', div), busca = $('[data-ed="busca"]', div);
+    function desenhar() {
+      var filtro = busca.value.toLowerCase(), grupos = {}, ordem = [];
+      listaTextos().forEach(function (t) {
+        var editado = tem(P.textos, t.chave), valor = editado ? P.textos[t.chave] : t.original;
+        if (editado && !O.textos.puro) { var tmp = document.createElement("div"); tmp.innerHTML = valor; valor = tmp.textContent; }
+        var lugar = t.el ? lugarDe(t.el) : (t.lugar || "Outros textos"), tipo = tipoDe(t.el);
+        if (filtro && (lugar + " " + tipo + " " + valor).toLowerCase().indexOf(filtro) < 0) return;
+        if (!grupos[lugar]) { grupos[lugar] = []; ordem.push(lugar); }
+        grupos[lugar].push('<div class="ed-texto' + (editado ? " mudou" : "") + '" data-k="' + esc(t.chave) + '"><div class="k"><span>' + esc(tipo) + "</span>" +
+          (editado ? '<button type="button" class="ed-bt mini" data-ed="original">Original</button>' : "") + "</div>" +
+          '<textarea rows="' + (valor.length > 90 ? 3 : 1) + '" aria-label="' + esc(lugar + ": " + tipo) + '">' + esc(valor) + "</textarea></div>");
+      });
+      lista.innerHTML = ordem.map(function (l) { return '<p class="ed-sub">' + esc(l) + "</p>" + grupos[l].join(""); }).join("") ||
+        '<p class="ed-dica">Nada encontrado.</p>';
+    }
+    desenhar();
+    busca.addEventListener("input", desenhar);
+    lista.addEventListener("input", function (e) {
+      var linha = e.target.closest("[data-k]");
+      // pela lista o texto é sempre puro; no site que aceita formatação ele entra escapado
+      definirTexto(linha.getAttribute("data-k"), O.textos.puro ? e.target.value : esc(e.target.value));
+      linha.classList.add("mudou");
+    });
+    lista.addEventListener("focusout", avisarSite);
+    lista.addEventListener("click", function (e) {
+      if (!e.target.closest('[data-ed="original"]')) return;
+      delete P.textos[e.target.closest("[data-k]").getAttribute("data-k")];
+      aplicarTextos(); avisarSite(); marcar(); desenhar();
+    });
+  }
+  function definirTexto(k, valor) {
+    P.textos[k] = valor;
+    marcar();
+    if (!O.textos.aplicar) return;
+    // mostra na página na hora (menos no elemento em que a pessoa está digitando)
+    $$(O.textos.seletor).forEach(function (el) {
+      if (O.textos.chave(el) === k && el !== document.activeElement) el.innerHTML = O.textos.puro ? esc(valor) : limpar(valor);
+    });
+  }
+
+  /* --- edição direto na página --- */
+  // Links, botões e campos ficam de fora: neles o clique tem outra função (editam-se pela lista).
+  function podeEditarAqui(el) { return !el.closest("a,button,select,option,summary,label,#ed-painel,dialog:not([open])"); }
+  function ligarEdicao(ligar) {
+    function editavel(el, modo) {
+      if (ligar && aberto && podeEditarAqui(el)) {
+        try { el.contentEditable = modo; } catch (e) { el.contentEditable = "true"; } // navegador antigo não conhece "plaintext-only"
+        el.setAttribute("data-ed-editavel", "");
+      } else if (el.hasAttribute("data-ed-editavel")) {
+        el.removeAttribute("contenteditable");
+        el.removeAttribute("data-ed-editavel");
+      }
+    }
+    if (O.textos) $$(O.textos.seletor).forEach(function (el) { editavel(el, O.textos.puro ? "plaintext-only" : "true"); });
+    // numa lista, cada item (ou cada célula, se a lista for uma tabela) vira um campo
+    $$("[data-edit-lista] > *").forEach(function (item) {
+      (item.tagName === "TR" ? Array.prototype.slice.call(item.children) : [item]).forEach(function (u) { editavel(u, "true"); });
+    });
+  }
+  function salvarLista(lista) {
+    var copia = lista.cloneNode(true);
+    $$("[data-ed-editavel]", copia).forEach(function (x) { x.removeAttribute("contenteditable"); x.removeAttribute("data-ed-editavel"); });
+    P.listas[lista.getAttribute("data-edit-lista")] = limpar(copia.innerHTML);
+    marcar();
+  }
+  document.addEventListener("input", function (e) {
+    var el = aberto && e.target.closest && e.target.closest("[data-ed-editavel]");
+    if (!el) return;
+    var lista = el.closest("[data-edit-lista]");
+    if (lista) salvarLista(lista);
+    else definirTexto(O.textos.chave(el), O.textos.puro ? el.textContent : limpar(el.innerHTML));
+  });
+  // terminou de editar um texto: o site redesenha o que depende dele e a lista do painel acompanha
+  document.addEventListener("focusout", function (e) {
+    if (!aberto || !(e.target.closest && e.target.closest("[data-ed-editavel]"))) return;
+    avisarSite();
+    if (abaAtual === "textos" && !painel.contains(e.relatedTarget)) mostrarAba("textos");
+  });
+  // Enter termina a edição (parágrafo solto quebraria o layout); Shift+Enter quebra a linha
+  document.addEventListener("keydown", function (e) {
+    if (aberto && e.key === "Enter" && !e.shiftKey && e.target.closest && e.target.closest("[data-ed-editavel]")) { e.preventDefault(); e.target.blur(); }
+  });
+  // colar sempre como texto puro, sem a formatação de onde veio
+  document.addEventListener("paste", function (e) {
+    if (!aberto || !(e.target.closest && e.target.closest("[data-ed-editavel]"))) return;
+    e.preventDefault();
+    document.execCommand("insertText", false, e.clipboardData.getData("text/plain").replace(/\s*\n\s*/g, " "));
+  });
+
+  /* --- ferramentas que aparecem ao passar o mouse numa imagem ou num item de lista --- */
+  var flutImg, flutItem, alvoImg = null, alvoItem = null, quadro = 0;
+  function montarFlutuantes() {
+    flutImg = document.createElement("div"); flutImg.className = "ed ed-flut"; flutImg.hidden = true;
+    flutImg.innerHTML = '<button type="button" data-f="trocar">Trocar imagem</button><button type="button" data-f="original">Original</button>';
+    flutItem = document.createElement("div"); flutItem.className = "ed ed-flut"; flutItem.hidden = true;
+    flutItem.innerHTML = '<button type="button" data-f="subir" title="Subir">↑</button><button type="button" data-f="descer" title="Descer">↓</button>' +
+      '<button type="button" data-f="novo" title="Adicionar item abaixo">+ item</button><button type="button" data-f="remover" title="Remover">✕</button>';
+    document.body.appendChild(flutImg);
+    document.body.appendChild(flutItem);
+    flutImg.addEventListener("click", function (e) {
+      var b = e.target.closest("[data-f]");
+      if (!b || !alvoImg) return;
+      var k = alvoImg.getAttribute("data-img");
+      if (b.getAttribute("data-f") === "trocar") escolherImagem(k); else voltarImagem(k);
+    });
+    flutItem.addEventListener("click", function (e) {
+      var b = e.target.closest("[data-f]");
+      if (!b || !alvoItem) return;
+      var lista = alvoItem.parentNode, f = b.getAttribute("data-f");
+      if (f === "subir" && alvoItem.previousElementSibling) lista.insertBefore(alvoItem, alvoItem.previousElementSibling);
+      if (f === "descer" && alvoItem.nextElementSibling) lista.insertBefore(alvoItem.nextElementSibling, alvoItem);
+      if (f === "novo") {
+        // copia o item e troca os textos por um modelo: o desenho do item continua o mesmo
+        var novo = alvoItem.cloneNode(true), folhas = $$("*", novo).filter(function (x) { return !x.children.length && x.textContent.trim(); });
+        if (!folhas.length) novo.textContent = "Novo item";
+        else folhas.forEach(function (x, i) { x.textContent = i === 0 ? "Novo item" : "Texto"; });
+        lista.insertBefore(novo, alvoItem.nextSibling);
+        alvoItem = novo;
+      }
+      if (f === "remover") {
+        if (lista.children.length <= 1) { mensagem("A lista precisa de pelo menos um item."); return; }
+        lista.removeChild(alvoItem);
+        alvoItem = null;
+        flutItem.hidden = true;
+      }
+      ligarEdicao(true); salvarLista(lista); avisarSite(); posicionar();
+    });
+  }
+  function esconderFlutuantes() { flutImg.hidden = flutItem.hidden = true; alvoImg = alvoItem = null; }
+  function colocar(fl, el) {
+    var r = el.getBoundingClientRect();
+    if (r.bottom < 0 || r.top > innerHeight) { fl.hidden = true; return; }
+    fl.hidden = false;
+    fl.style.left = Math.max(6, Math.min(innerWidth - fl.offsetWidth - 6, r.right - fl.offsetWidth - 6)) + "px";
+    fl.style.top = Math.max(6, Math.min(innerHeight - fl.offsetHeight - 6, r.top + 6)) + "px";
+  }
+  function posicionar() { if (alvoImg) colocar(flutImg, alvoImg); if (alvoItem) colocar(flutItem, alvoItem); }
+  document.addEventListener("pointermove", function (e) {
+    if (!aberto || e.pointerType === "touch" || quadro) return;
+    quadro = requestAnimationFrame(function () { // no máximo uma conta por quadro de tela
+      quadro = 0;
+      // tudo o que está debaixo do mouse: a imagem pode estar sob uma legenda ou um degradê
+      var pilha = document.elementsFromPoint(e.clientX, e.clientY);
+      if (pilha.some(function (x) { return x === flutImg || x === flutItem || painel.contains(x); })) return;
+      var img = null, item = null;
+      pilha.forEach(function (x) {
+        if (!img && x.hasAttribute("data-img")) img = x;
+        if (!item) item = x.closest("[data-edit-lista] > *");
+      });
+      alvoImg = img;
+      alvoItem = item;
+      if (!img) flutImg.hidden = true;
+      if (!item) flutItem.hidden = true;
+      posicionar();
+    });
+  }, { passive: true });
+  addEventListener("scroll", function () { if (aberto) posicionar(); }, { passive: true });
+
+  /* --- aba Imagens --- */
+  // Foto grande é reduzida e vira JPG, para o arquivo do site não engordar à toa; SVG e PNG pequeno ficam como estão.
+  function lerImagem(arquivo, max) {
+    return new Promise(function (ok, falha) {
+      if (!/^image\//.test(arquivo.type)) return falha(new Error("Escolha um arquivo de imagem (JPG, PNG, WebP ou SVG)."));
+      if (arquivo.size > 15 * 1024 * 1024) return falha(new Error("A imagem passa de 15 MB. Escolha uma menor."));
+      var leitor = new FileReader();
+      leitor.onerror = function () { falha(new Error("Não deu para ler o arquivo.")); };
+      leitor.onload = function () {
+        if (arquivo.type === "image/svg+xml" || (arquivo.type === "image/png" && arquivo.size < 300000)) return ok(leitor.result);
+        var im = new Image();
+        im.onload = function () {
+          var escala = Math.min(1, max / Math.max(im.width, im.height)), tela = document.createElement("canvas");
+          tela.width = Math.round(im.width * escala);
+          tela.height = Math.round(im.height * escala);
+          tela.getContext("2d").drawImage(im, 0, 0, tela.width, tela.height);
+          ok(tela.toDataURL("image/jpeg", 0.82));
+        };
+        im.onerror = function () { falha(new Error("O navegador não conseguiu abrir essa imagem.")); };
+        im.src = leitor.result;
+      };
+      leitor.readAsDataURL(arquivo);
+    });
+  }
+  // um campo de arquivo escondido serve para escolher a imagem e, no Salvar sem servidor, o index.html
+  var entrada;
+  function pedirArquivo(aceita, aoEscolher) {
+    if (!entrada) { entrada = document.createElement("input"); entrada.type = "file"; entrada.hidden = true; document.body.appendChild(entrada); }
+    entrada.accept = aceita;
+    entrada.value = "";
+    entrada.onchange = function () { if (entrada.files[0]) aoEscolher(entrada.files[0]); };
+    entrada.click();
+  }
+  function escolherImagem(k) {
+    pedirArquivo("image/*", function (arquivo) {
+      lerImagem(arquivo, k === "logo" ? 600 : 1800).then(function (url) {
+        P.imagens[k] = url;
+        aplicarImagens(); avisarSite(); marcar();
+        if (abaAtual === "imagens") mostrarAba("imagens");
+        mensagem("Imagem trocada.");
+      }, function (erro) { mensagem(erro.message, true); });
+    });
+  }
+  function voltarImagem(k) {
+    delete P.imagens[k];
+    aplicarImagens(); avisarSite(); marcar();
+    if (abaAtual === "imagens") mostrarAba("imagens");
+  }
+  function abaImagens() {
+    var vistos = {}, cartoes = [];
+    $$("[data-img]").forEach(function (el) {
+      var k = el.getAttribute("data-img");
+      if (vistos[k]) return;
+      vistos[k] = true;
+      var o = el.__original || {}, atual = P.imagens[k] || o.src || "";
+      // logo desenhado no próprio HTML (SVG): a prévia é o desenho
+      var previa = atual ? "" : (o.html ? '<span class="ed-svg">' + o.html + "</span>" : "<span>sem imagem</span>");
+      cartoes.push('<figure><div class="ed-miniatura" style="background-image:url(\'' + esc(atual) + "')\">" + previa + "</div>" +
+        "<figcaption><b>" + esc(el.getAttribute("data-img-nome") || k) + '</b><div><button type="button" class="ed-bt mini pri" data-trocar="' + esc(k) + '">Trocar</button>' +
+        (P.imagens[k] ? '<button type="button" class="ed-bt mini" data-original="' + esc(k) + '">Original</button>' : "") + "</div></figcaption></figure>");
+    });
+    var div = document.createElement("div");
+    div.innerHTML = '<p class="ed-dica">Também dá para passar o mouse sobre uma imagem da página e clicar em <b>Trocar imagem</b>.' +
+      (O.imagens && O.imagens.nota ? " " + esc(O.imagens.nota) : "") + '</p><div class="ed-imagens">' + cartoes.join("") + "</div>";
+    corpo.appendChild(div);
+    div.addEventListener("click", function (e) {
+      var trocar = e.target.closest("[data-trocar]"), original = e.target.closest("[data-original]");
+      if (trocar) escolherImagem(trocar.getAttribute("data-trocar"));
+      if (original) voltarImagem(original.getAttribute("data-original"));
+    });
+  }
+
+  /* --- aba Cores --- */
+  function abaCores() {
+    var div = document.createElement("div");
+    div.innerHTML = '<p class="ed-dica">Cada cor tem a versão do tema claro e a do escuro. Confira a leitura nos dois.</p>' +
+      O.tema.map(function (t) {
+        var atual = P.tema[t.v] || {};
+        return '<div class="ed-cor" data-v="' + esc(t.v) + '"><span>' + esc(t.r) + "</span>" +
+          '<label><input type="color" data-modo="claro" value="' + esc(atual.claro || t.claro) + '"><small>claro</small></label>' +
+          '<label><input type="color" data-modo="escuro" value="' + esc(atual.escuro || t.escuro) + '"><small>escuro</small></label>' +
+          '<button type="button" class="ed-bt mini" data-ed="original"' + (P.tema[t.v] ? "" : " disabled") + ' title="Voltar à cor original">↺</button></div>';
+      }).join("");
+    corpo.appendChild(div);
+    div.addEventListener("input", function (e) {
+      var linha = e.target.closest("[data-v]");
+      if (!linha || e.target.type !== "color") return;
+      var v = linha.getAttribute("data-v"), base = O.tema.filter(function (t) { return t.v === v; })[0];
+      var atual = P.tema[v] || { claro: base.claro, escuro: base.escuro };
+      atual[e.target.getAttribute("data-modo")] = e.target.value;
+      P.tema[v] = atual;
+      aplicarCores(); marcar();
+      $('[data-ed="original"]', linha).disabled = false;
+    });
+    div.addEventListener("click", function (e) {
+      var b = e.target.closest('[data-ed="original"]');
+      if (!b) return;
+      delete P.tema[b.closest("[data-v]").getAttribute("data-v")];
+      aplicarCores(); marcar(); mostrarAba("cores");
+    });
+  }
+
+  /* --- aba Seções --- */
+  function abaSecoes() {
+    var els = $$("[data-secao]"), ids = els.map(function (e) { return e.getAttribute("data-secao"); }); // ordem atual da página
+    var div = document.createElement("div");
+    div.innerHTML = '<p class="ed-dica">Use as setas para mudar a ordem. Desmarque para esconder: o link do menu some junto.' +
+      (O.secoes && O.secoes.fixas ? " Ficam sempre no lugar: " + esc(O.secoes.fixas) + "." : "") + "</p>" +
+      '<ul class="ed-secoes">' + els.map(function (el, i) {
+        var oculta = P.secoes.ocultas.indexOf(ids[i]) >= 0;
+        return '<li data-id="' + esc(ids[i]) + '"' + (oculta ? ' class="oculta"' : "") + '><span class="nome">' + esc(el.getAttribute("data-secao-nome") || ids[i]) + "</span>" +
+          '<button type="button" class="ed-bt mini" data-mover="-1" aria-label="Subir"' + (i === 0 ? " disabled" : "") + ">↑</button>" +
+          '<button type="button" class="ed-bt mini" data-mover="1" aria-label="Descer"' + (i === els.length - 1 ? " disabled" : "") + ">↓</button>" +
+          '<label><input type="checkbox"' + (oculta ? "" : " checked") + "> mostrar</label></li>";
+      }).join("") + "</ul>" +
+      '<button type="button" class="ed-bt" data-ed="ordem-original">Voltar à ordem original</button>';
+    corpo.appendChild(div);
+    function mudar() { aplicarSecoes(); avisarSite(); marcar(); mostrarAba("secoes"); }
+    div.addEventListener("click", function (e) {
+      var b = e.target.closest("[data-mover]");
+      if (b) {
+        var i = ids.indexOf(b.closest("li").getAttribute("data-id")), j = i + Number(b.getAttribute("data-mover"));
+        ids.splice(j, 0, ids.splice(i, 1)[0]);
+        P.secoes.ordem = ids;
+        mudar();
+      }
+      if (e.target.closest('[data-ed="ordem-original"]')) { P.secoes = { ordem: [], ocultas: [] }; mudar(); }
+    });
+    div.addEventListener("change", function (e) {
+      var id = e.target.closest("li").getAttribute("data-id");
+      P.secoes.ocultas = P.secoes.ocultas.filter(function (x) { return x !== id; });
+      if (!e.target.checked) P.secoes.ocultas.push(id);
+      mudar();
+    });
+  }
+
+  /* ---------- 6. Salvar: baixar o index.html com a personalização dentro ---------- */
+  // Por quê baixar: funciona em qualquer navegador e em qualquer hospedagem.
+  function lerArquivoDoSite(pronto) {
+    // site aberto por http (GitHub Pages, servidor local): o navegador busca o próprio arquivo
+    if (location.protocol !== "file:") {
+      fetch(location.href.split("#")[0], { cache: "no-store" })
+        .then(function (r) { if (!r.ok) throw new Error(r.status); return r.text(); })
+        .then(pronto, function () { mensagem("Não deu para ler o arquivo do site. Recarregue a página e tente de novo.", true); });
+      return;
+    }
+    // aberto direto do computador: o navegador não deixa a página ler o próprio arquivo, então a pessoa aponta qual é
+    mensagem("Escolha o index.html deste site (o arquivo que está aberto agora).");
+    pedirArquivo(".html,.htm", function (arquivo) { arquivo.text().then(pronto); });
+  }
+  function salvar() {
+    lerArquivoDoSite(function (html) {
+      // troca só o conteúdo do bloco #personalizacao; o resto do arquivo fica igual
+      var re = /(<script type="application\/json" id="personalizacao" data-site="([^"]*)">)[\s\S]*?(<\/script>)/;
+      var achado = html.match(re);
+      if (!achado || achado[2] !== SITE) { mensagem("Esse arquivo não é o index.html deste site.", true); return; }
+      var json = JSON.stringify(P).replace(/</g, "\\u003c"); // "<" escapado: o JSON nunca fecha o <script> antes da hora
+      baixar(html.replace(re, function (m, abre, site, fecha) { return abre + json + fecha; }));
+      mudou = false;
+      atualizarSalvar();
+      mensagem("Pronto: o index.html novo está nos downloads. Para publicar, troque o arquivo do site por ele.");
+    });
+  }
+  function baixar(html) {
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([html], { type: "text/html" }));
+    a.download = "index.html";
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 2000);
+  }
+  // Ctrl+S salva, como em qualquer editor
+  document.addEventListener("keydown", function (e) {
+    if (aberto && (e.ctrlKey || e.metaKey) && String(e.key).toLowerCase() === "s") { e.preventDefault(); salvar(); }
+  });
+  // fechar ou recarregar a página com edição não salva: o navegador pergunta antes
+  addEventListener("beforeunload", function (e) { if (mudou) { e.preventDefault(); e.returnValue = ""; } });
+
+  /* ---------- 7. Início ---------- */
+  function iniciar(opcoes) {
+    O = opcoes || {};
+    // guarda o original de cada parte editável, para os botões "Original"
+    if (O.textos) $$(O.textos.seletor).forEach(function (el) { el.__original = el.innerHTML; });
+    $$("[data-edit-lista]").forEach(function (el) { ORIG.listas[el.getAttribute("data-edit-lista")] = el.innerHTML; });
+    $$("[data-img]").forEach(function (el) { el.__original = el.tagName === "IMG" ? { src: el.getAttribute("src"), srcset: el.getAttribute("srcset") } : { html: el.innerHTML }; });
+    ORIG.secoes = $$("[data-secao]").map(function (el) { return el.getAttribute("data-secao"); });
+    montarFlutuantes();
+    aplicarTudo();
+    // abre pelo botão do site (data-abre-admin) ou pelo endereço terminado em #admin
+    document.addEventListener("click", function (e) { if (e.target.closest && e.target.closest("[data-abre-admin]")) { e.preventDefault(); abrir(); } });
+    addEventListener("hashchange", function () { if (location.hash === "#admin" && !aberto) abrir(); });
+    if (location.hash === "#admin") abrir();
+  }
+
+  window.Editor = {
+    iniciar: iniciar,
+    ativo: function () { return aberto; },                                       // o site não abre popups enquanto se edita
+    texto: function (k) { return tem(P.textos, k) ? P.textos[k] : undefined; },  // para o site que desenha os próprios textos
+    imagem: function (k, padrao) { return P.imagens[k] || padrao; },            // imagem trocada que o site mostra em outro lugar (ex.: foto ampliada)
+    religar: function () { if (aberto) ligarEdicao(true); },                      // depois que o site redesenha os textos (ex.: troca de idioma)
+    atualizarPainel: function () { if (aberto) mostrarAba(abaAtual); },          // o que o painel mostra mudou (ex.: idioma): redesenha a aba aberta
+    // dado editado numa aba do site: fica no bloco #personalizacao (vai junto no Salvar) e vale por cima do original
+    dados: function (nome, original) { return tem(P.dados, nome) ? JSON.parse(JSON.stringify(P.dados[nome])) : original; },
+    gravarDados: function (nome, valor) { P.dados[nome] = JSON.parse(JSON.stringify(valor)); marcar(); }
+  };
+})();
+</script>
+
+<script>
+/*
+  Comportamento do portal. Sem bibliotecas: o navegador já tem dialog, Intl (datas e moedas)
+  e IntersectionObserver. Cada bloco diz o que faz e por quê.
+*/
+(function () {
+  "use strict";
+  var $ = function (s, r) { return (r || document).querySelector(s); };
+  var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
+  // Se o bloco do modo admin for apagado, o portal segue funcionando igual, só sem o modo admin
+  var ED = window.Editor || { iniciar: function () {}, texto: function () {}, religar: function () {}, atualizarPainel: function () {}, dados: function (n, o) { return o; } };
+  var CFG = JSON.parse($("#config").textContent);
+  // comunicados editados no modo admin (aba Comunicados) valem por cima do config
+  CFG.avisos = ED.dados("avisos", CFG.avisos);
+  var ITENS = JSON.parse($("#itens").textContent);
+  var HOJE = new Date(); HOJE.setHours(0, 0, 0, 0);
+
+  /* ---------- Textos da interface em PT e EN ---------- */
+  // Por quê: o conteúdo (itens, contatos) já vem bilíngue nos blocos de dados; aqui ficam só os rótulos fixos.
+  var TXT = {
+    pt: {
+      pular: "Pular para o conteúdo", nomePortal: "Portal do Colaborador", buscar: "Buscar no portal", buscaPh: "Buscar benefício, regra, pessoa…",
+      mInicio: "Início", mBen: "Benefícios", mProg: "Programas", mPol: "Políticas de RH", mDp: "Departamento Pessoal", mCal: "Calendário", mPes: "Pessoas", mCont: "Fale com o RH",
+      bomDia: "Bom dia", boaTarde: "Boa tarde", boaNoite: "Boa noite", subBoas: "Tudo do RH em um lugar: benefícios, regras, datas e quem procurar.",
+      hoje: "Hoje", proxPag: "Próximo pagamento", proxAdi: "Adiantamento", proxFer: "Próximo feriado", clima: "Clima", emDias: "em {n} dias", amanha: "amanhã", hojeE: "hoje",
+      rotAvisos: "Comunicados", tAvisos: "O que está acontecendo", rotCat: "Categoria", verPara: "Ver para:", todas: "Todas", voce: "você",
+      pBen: "O que a empresa oferece além do salário. Clique para ver quem tem direito e como usar.", pProg: "Iniciativas para crescer, aprender e cuidar da família.",
+      pPol: "As regras que valem para todos, em linguagem direta.", pDp: "Folha, férias e ponto: o que fazer e até quando.",
+      rotCal: "Calendário do RH", tCal: "Datas que importam", pCal: "Pagamento, feriados e eventos por unidade. Clique num dia para ver o que acontece.",
+      proximos: "Próximos eventos", verProximos: "Ver próximos", nada: "Nada marcado neste dia.", pagamento: "Pagamento do salário", adiantamento: "Adiantamento salarial", feriado: "Feriado", geral: "Todas as unidades",
+      tPes: "Quem comemora este mês", aniversarios: "Aniversariantes de {m}", tempoCasa: "Tempo de casa", anos: "{n} anos",
+      tCont: "Quem procurar para cada assunto", naoAchou: "Não achou o que procurava?", naoAchou2: "Abra um chamado e o RH responde em até 2 dias úteis.", abrirChamado: "Abrir chamado", copiarEmail: "Copiar e-mail",
+      oQue: "O que é", quem: "Quem tem direito", como: "Como usar", duvidas: "Dúvidas", fale: "Fale com {n} ({p}): {e}", baixarCard: "Baixar card em PDF", copiarLink: "Copiar link", incluiVoce: "inclui você", naoInclui: "Não se aplica à sua unidade",
+      assunto: "Assunto", unidade: "Unidade", descreva: "Descreva o que precisa", descrevaPh: "Ex.: meu vale não caiu este mês.", anexo: "Anexo (opcional)", anexoDica: "PDF ou imagem, até 5 MB. Não envie atestado aqui: use o app de ponto.", enviar: "Enviar chamado",
+      erroTexto: "Conte em pelo menos 15 caracteres o que aconteceu.", erroAnexo: "O arquivo passa de 5 MB. Envie um menor.", enviando: "Enviando…", erroEnvio: "Não foi possível enviar agora. Tente de novo em instantes.",
+      chamadoOk: "Chamado aberto", chamadoTxt: "{a}: o RH responde em até 2 dias úteis no seu e-mail.", demo: "Demonstração: nada foi enviado.", fechar: "Fechar",
+      semResultado: "Nada encontrado para “{q}”. Tente outra palavra ou abra um chamado.", tItem: "Item", tContato: "Contato", tAviso: "Comunicado",
+      atalhoDemo: "Na demonstração este atalho não abre um sistema.", pdfDemo: "Na demonstração não há PDF. Em produção abre o card oficial.", linkCopiado: "Link copiado", emailCopiado: "E-mail copiado", copieManual: "Selecionado. Use Ctrl+C.",
+      rodape1: "C. & Paoli corp. · Portal do Colaborador", rodape2: "Projeto de portfólio: empresa, pessoas e dados fictícios.", ola: "Olá", personalizar: "Personalizar"
+    },
+    en: {
+      pular: "Skip to content", nomePortal: "Employee Portal", buscar: "Search the portal", buscaPh: "Search a benefit, rule, person…",
+      mInicio: "Home", mBen: "Benefits", mProg: "Programmes", mPol: "HR policies", mDp: "Payroll & time", mCal: "Calendar", mPes: "People", mCont: "Contact HR",
+      bomDia: "Good morning", boaTarde: "Good afternoon", boaNoite: "Good evening", subBoas: "Everything from HR in one place: benefits, rules, dates and who to ask.",
+      hoje: "Today", proxPag: "Next payday", proxAdi: "Salary advance", proxFer: "Next holiday", clima: "Weather", emDias: "in {n} days", amanha: "tomorrow", hojeE: "today",
+      rotAvisos: "Announcements", tAvisos: "What's happening", rotCat: "Category", verPara: "Show for:", todas: "All", voce: "you",
+      pBen: "What the company offers on top of your salary. Click to see who is eligible and how to use it.", pProg: "Initiatives to grow, learn and care for your family.",
+      pPol: "Rules that apply to everyone, in plain language.", pDp: "Payroll, time off and timesheet: what to do and by when.",
+      rotCal: "HR calendar", tCal: "Dates that matter", pCal: "Payday, holidays and events by site. Click a day to see what's on.",
+      proximos: "Upcoming", verProximos: "Show upcoming", nada: "Nothing scheduled on this day.", pagamento: "Payday", adiantamento: "Salary advance", feriado: "Holiday", geral: "All sites",
+      tPes: "Celebrating this month", aniversarios: "Birthdays in {m}", tempoCasa: "Work anniversaries", anos: "{n} years",
+      tCont: "Who to ask about what", naoAchou: "Couldn't find it?", naoAchou2: "Open a ticket and HR replies within 2 business days.", abrirChamado: "Open a ticket", copiarEmail: "Copy e-mail",
+      oQue: "What it is", quem: "Who is eligible", como: "How to use it", duvidas: "Questions", fale: "Contact {n} ({p}): {e}", baixarCard: "Download card as PDF", copiarLink: "Copy link", incluiVoce: "includes you", naoInclui: "Doesn't apply to your site",
+      assunto: "Topic", unidade: "Site", descreva: "Describe what you need", descrevaPh: "E.g. my allowance wasn't credited this month.", anexo: "Attachment (optional)", anexoDica: "PDF or image, up to 5 MB. Don't send medical certificates here: use the timesheet app.", enviar: "Send ticket",
+      erroTexto: "Tell us what happened in at least 15 characters.", erroAnexo: "The file is over 5 MB. Please send a smaller one.", enviando: "Sending…", erroEnvio: "Couldn't send right now. Please try again shortly.",
+      chamadoOk: "Ticket opened", chamadoTxt: "{a}: HR will reply to your e-mail within 2 business days.", demo: "Demo: nothing was sent.", fechar: "Close",
+      semResultado: "Nothing found for “{q}”. Try another word or open a ticket.", tItem: "Item", tContato: "Contact", tAviso: "Announcement",
+      atalhoDemo: "In the demo this shortcut doesn't open a system.", pdfDemo: "No PDF in the demo. In production this opens the official card.", linkCopiado: "Link copied", emailCopiado: "E-mail copied", copieManual: "Selected. Press Ctrl+C.",
+      rodape1: "C. & Paoli corp. · Employee Portal", rodape2: "Portfolio project: company, people and data are fictional.", ola: "Hello", personalizar: "Customise"
+    }
+  };
+  var lang = "en";   // primeiro acesso: inglês
+  try { var salvo = localStorage.getItem("portal-lang"); if (salvo === "en" || salvo === "pt") lang = salvo; } catch (e) {}
+  // texto personalizado no modo admin (por idioma) vence o texto padrão
+  var t = function (k, vars) {
+    var s = ED.texto(lang + ":" + k);
+    if (s == null) s = TXT[lang][k] || k;
+    if (vars) Object.keys(vars).forEach(function (v) { s = s.replace("{" + v + "}", vars[v]); });
+    return s;
+  };
+  var L = function (obj) { return obj[lang] != null ? obj[lang] : obj.pt; };
+  var locale = function () { return lang === "pt" ? "pt-BR" : "en-US"; };
+  var esc = function (s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); };
+  var semAcento = function (s) { return s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase(); };
+  var CAT = {
+    ben: { cor: "var(--c-ben)", nome: "mBen", grade: "#grade-ben" }, prog: { cor: "var(--c-prog)", nome: "mProg", grade: "#grade-prog" },
+    pol: { cor: "var(--c-pol)", nome: "mPol", grade: "#grade-pol" }, dp: { cor: "var(--c-dp)", nome: "mDp", grade: "#grade-dp" }
+  };
+  var meuU = CFG.usuario.unidade;
+
+  // Aviso curto no rodapé. Por quê: confirma ações pequenas sem abrir outro popup.
+  function aviso(txt) {
+    var el = $("#toast"); el.textContent = txt; el.classList.add("ver");
+    clearTimeout(el._t); el._t = setTimeout(function () { el.classList.remove("ver"); }, 2600);
+  }
+  // Copia texto; se o navegador recusar, seleciona para o usuário copiar na mão.
+  function copiar(texto, msg, elFallback) {
+    var plano = function () {
+      if (!elFallback) return aviso(texto);
+      var r = document.createRange(); r.selectNodeContents(elFallback); var s = getSelection(); s.removeAllRanges(); s.addRange(r); aviso(t("copieManual"));
+    };
+    if (navigator.clipboard) navigator.clipboard.writeText(texto).then(function () { aviso(msg); }, plano); else plano();
+  }
+
+  /* ---------- Datas: dia útil, pagamento e feriados ---------- */
+  // Por quê: "quando cai o salário" é a pergunta mais feita ao RH. A regra vem do config, não de datas digitadas.
+  var iso = function (d) { return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); };
+  var deIso = function (s) { var p = s.split("-").map(Number); return new Date(p[0], p[1] - 1, p[2]); };
+  var FERIADOS = {}; CFG.feriados.forEach(function (f) { FERIADOS[f[0]] = { pt: f[1], en: f[2] }; });
+  var diaUtil = function (d) { var w = d.getDay(); return w !== 0 && w !== 6 && !FERIADOS[iso(d)]; };
+  function primeiroDiaUtil(ano, mes) { var d = new Date(ano, mes, 1); while (!diaUtil(d)) d.setDate(d.getDate() + 1); return d; }
+  function diaUtilAnteriorOuIgual(ano, mes, dia) { var d = new Date(ano, mes, dia); while (!diaUtil(d)) d.setDate(d.getDate() - 1); return d; }
+  // Gera pagamento e adiantamento do mês. Pagamento = 1º dia útil; adiantamento = dia 20 ou o dia útil anterior.
+  function eventosDoMes(ano, mes) {
+    return [
+      { data: iso(primeiroDiaUtil(ano, mes)), u: "pag", pt: TXT.pt.pagamento, en: TXT.en.pagamento },
+      { data: iso(diaUtilAnteriorOuIgual(ano, mes, CFG.pagamento.adiantamentoDia)), u: "pag", pt: TXT.pt.adiantamento, en: TXT.en.adiantamento }
+    ];
+  }
+  function todosEventos(ano, mes) {
+    var lista = eventosDoMes(ano, mes).concat(CFG.eventos.slice());
+    Object.keys(FERIADOS).forEach(function (k) { lista.push({ data: k, u: "fer", pt: FERIADOS[k].pt, en: FERIADOS[k].en }); });
+    return lista;
+  }
+  function proximo(filtro) {
+    for (var i = 0; i < 400; i++) {
+      var d = new Date(HOJE); d.setDate(d.getDate() + i);
+      if (filtro(d)) return d;
+    }
+    return null;
+  }
+  var distancia = function (d) { var n = Math.round((d - HOJE) / 864e5); return n === 0 ? t("hojeE") : n === 1 ? t("amanha") : t("emDias", { n: n }); };
+  var curta = function (d) { return d.toLocaleDateString(locale(), { weekday: "short", day: "2-digit", month: "2-digit" }); };
+
+  /* ---------- Faixa de boas-vindas ---------- */
+  function renderBoas() {
+    var h = new Date().getHours();
+    var nome = CFG.usuario.nome.split(" ")[0];
+    $("#saudacao-rot").textContent = HOJE.toLocaleDateString(locale(), { weekday: "long" });
+    $("#saudacao").textContent = t(h < 12 ? "bomDia" : h < 18 ? "boaTarde" : "boaNoite") + ", " + nome;
+    $("#eu-nome").textContent = CFG.usuario.nome;
+    $("#eu-unidade").textContent = L(CFG.usuario.cargo) + " · " + L(CFG.unidades[meuU]);
+    $("#eu-ini").textContent = CFG.usuario.nome.split(" ").map(function (p) { return p[0]; }).slice(0, 2).join("");
+    $("#hoje-data").textContent = HOJE.toLocaleDateString(locale(), { day: "numeric", month: "long", year: "numeric" });
+
+    var pag = proximo(function (d) { return iso(d) === iso(primeiroDiaUtil(d.getFullYear(), d.getMonth())); });
+    var adi = proximo(function (d) { return iso(d) === iso(diaUtilAnteriorOuIgual(d.getFullYear(), d.getMonth(), CFG.pagamento.adiantamentoDia)); });
+    var fer = proximo(function (d) { return !!FERIADOS[iso(d)] && d.getDay() !== 0 && d.getDay() !== 6; });
+    $("#prox-pag").innerHTML = esc(curta(pag)) + '<span class="contagem">' + esc(distancia(pag)) + "</span>";
+    $("#prox-adi").textContent = curta(adi);
+    $("#prox-fer").innerHTML = fer ? esc(curta(fer)) + "<small>" + esc(L(FERIADOS[iso(fer)])) + "</small>" : "·";
+    $("#clima").innerHTML = CFG.clima.temp + "°C<small>" + esc(L(CFG.clima)) + "</small>";
+
+    $("#atalhos").innerHTML = CFG.atalhos.map(function (a, i) {
+      return '<button type="button" class="atalho" data-atalho="' + i + '"><svg class="ico" aria-hidden="true"><use href="#i-' + a.icone + '"/></svg>' + esc(L(a)) + "</button>";
+    }).join("");
+  }
+  // Atalho: abre a URL configurada; sem URL (demonstração) só avisa. "acao: chamado" abre o popup.
+  $("#atalhos").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-atalho]"); if (!b) return;
+    var a = CFG.atalhos[+b.dataset.atalho];
+    if (a.acao === "chamado") return abrirChamado();
+    if (a.url) window.open(a.url, "_blank", "noopener"); else aviso(t("atalhoDemo"));
+  });
+
+  /* ---------- Comunicados ---------- */
+  function etiquetaUnidade(u) {
+    var cor = u === "geral" ? "var(--u-geral)" : "var(" + CFG.unidades[u].cor + ")";
+    var nome = u === "geral" ? t("geral") : L(CFG.unidades[u]);
+    return '<span class="etiqueta"><i style="background:' + cor + '"></i>' + esc(nome) + "</span>";
+  }
+  function renderAvisos() {
+    $("#lista-avisos").innerHTML = CFG.avisos.map(function (a) {
+      var txt = L(a);
+      return '<article class="aviso"><div class="meta"><span class="num">' + esc(deIso(a.data).toLocaleDateString(locale(), { day: "2-digit", month: "short" })) + "</span>" + etiquetaUnidade(a.u) +
+        "</div><h3>" + esc(txt[0]) + "</h3><p>" + esc(txt[1]) + "</p></article>";
+    }).join("");
+  }
+
+  /* ---------- Cartões das categorias ---------- */
+  // Filtro por unidade só em Benefícios, onde a regra muda de unidade para unidade.
+  var filtroU = "todas";
+  function renderFiltro() {
+    var opcoes = ["todas"].concat(Object.keys(CFG.unidades));
+    $("#filtro-unidade").innerHTML = '<span id="filtro-t">' + esc(t("verPara")) + "</span>" + opcoes.map(function (u) {
+      var nome = u === "todas" ? t("todas") : L(CFG.unidades[u]) + (u === meuU ? " (" + t("voce") + ")" : "");
+      return '<button type="button" data-u="' + u + '" aria-pressed="' + (u === filtroU) + '">' + esc(nome) + "</button>";
+    }).join("");
+  }
+  $("#filtro-unidade").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-u]"); if (!b) return;
+    filtroU = b.dataset.u; renderFiltro(); renderGrades();
+  });
+  function cartao(it) {
+    var c = L(it), cat = CAT[it.cat];
+    var fora = it.cat === "ben" && filtroU !== "todas" && it.quem.indexOf(filtroU) < 0;
+    var rodape = it.quem.length === Object.keys(CFG.unidades).length
+      ? '<span>' + esc(t("todas")) + "</span>"
+      : it.quem.map(function (u) { return '<span class="' + (u === meuU ? "voce" : "") + '">' + esc(L(CFG.unidades[u])) + "</span>"; }).join("");
+    return '<button type="button" class="item' + (fora ? " apagado" : "") + '" style="--cor:' + cat.cor + '" data-item="' + it.id + '"' + (fora ? ' aria-describedby="fora-' + it.id + '"' : "") + ">" +
+      '<span class="icone"><svg class="ico" aria-hidden="true"><use href="#i-' + it.icone + '"/></svg></span><h3>' + esc(c.t) + "</h3><p>" + esc(c.r) + "</p>" +
+      '<span class="rodape-item">' + rodape + "</span>" + (fora ? '<span class="sr" id="fora-' + it.id + '">' + esc(t("naoInclui")) + "</span>" : "") + "</button>";
+  }
+  function renderGrades() {
+    Object.keys(CAT).forEach(function (k) {
+      var itens = ITENS.filter(function (i) { return i.cat === k; });
+      // no filtro, quem tem direito vem primeiro; os demais ficam esmaecidos (não somem, para não parecer que o benefício acabou)
+      if (k === "ben" && filtroU !== "todas") itens.sort(function (a, b) { return (b.quem.indexOf(filtroU) >= 0) - (a.quem.indexOf(filtroU) >= 0); });
+      $(CAT[k].grade).innerHTML = itens.map(cartao).join("");
+    });
+  }
+  $("main").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-item]"); if (b) abrirItem(b.dataset.item);
+  });
+
+  /* ---------- Popup do item ---------- */
+  var dlgItem = $("#dlg-item"), itemAberto = null;
+  function abrirItem(id) {
+    var it = ITENS.find(function (i) { return i.id === id; }); if (!it) return;
+    itemAberto = it;
+    var c = L(it), cat = CAT[it.cat], ct = CFG.contatos[it.contato];
+    dlgItem.style.setProperty("--cor", cat.cor);
+    $("#item-cat").textContent = t(cat.nome);
+    $("#item-titulo").textContent = c.t;
+    $("#item-resumo").textContent = c.r;
+    $("#item-oque").textContent = c.o;
+    $("#item-quem").innerHTML = Object.keys(CFG.unidades).map(function (u) {
+      var tem = it.quem.indexOf(u) >= 0;
+      return '<span class="' + (tem ? "sim" : "") + (tem && u === meuU ? " voce" : "") + '">' + (tem ? "✓ " : "") + esc(L(CFG.unidades[u])) + (tem && u === meuU ? " · " + esc(t("incluiVoce")) : "") + "</span>";
+    }).join("");
+    $("#item-como").innerHTML = c.c.map(function (p) { return "<li>" + esc(p) + "</li>"; }).join("");
+    $("#item-duvidas").textContent = t("fale", { n: ct.nome, p: L(ct.assunto), e: ct.email });
+    if (!dlgItem.open) dlgItem.showModal();
+    // o endereço passa a apontar para o item: dá para mandar o link para um colega
+    try { history.replaceState(null, "", "#" + id); } catch (e) {}
+  }
+  dlgItem.addEventListener("close", function () { try { history.replaceState(null, "", location.pathname + location.search); } catch (e) {} });
+  $("#item-pdf").addEventListener("click", function () { aviso(t("pdfDemo")); });
+  $("#item-link").addEventListener("click", function () {
+    var url = location.href.split("#")[0] + "#" + itemAberto.id;
+    copiar(url, t("linkCopiado"));
+  });
+  $$("dialog").forEach(function (d) {
+    d.addEventListener("click", function (e) { if (e.target === d || e.target.closest("[data-fecha]")) d.close(); });
+  });
+
+  /* ---------- Busca ---------- */
+  // Por quê: no portal antigo a pessoa rolava a página inteira procurando "férias". Aqui digita e abre.
+  var busca = $("#busca"), caixa = $("#resultados"), achados = [], marcado = -1;
+  function indexar() {
+    var lista = ITENS.map(function (it) {
+      var c = L(it);
+      return { tipo: t("tItem"), titulo: c.t, sub: t(CAT[it.cat].nome) + " · " + c.r, texto: [c.t, c.r, c.o, c.c.join(" ")].join(" "), abrir: function () { abrirItem(it.id); } };
+    });
+    CFG.contatos.forEach(function (ct) {
+      lista.push({ tipo: t("tContato"), titulo: ct.nome, sub: L(ct.assunto) + " · " + ct.email, texto: [ct.nome, L(ct.assunto), L(ct.papel), ct.email].join(" "),
+        abrir: function () { location.hash = "contato"; } });
+    });
+    CFG.avisos.forEach(function (a) {
+      lista.push({ tipo: t("tAviso"), titulo: L(a)[0], sub: L(a)[1], texto: L(a).join(" "), abrir: function () { location.hash = "avisos"; } });
+    });
+    return lista;
+  }
+  function buscar() {
+    var q = semAcento(busca.value.trim());
+    if (!q) { fecharBusca(); return; }
+    var termos = q.split(/\s+/);
+    achados = indexar().filter(function (r) { var tx = semAcento(r.texto); return termos.every(function (p) { return tx.indexOf(p) >= 0; }); })
+      // título que contém a busca vem antes
+      .sort(function (a, b) { return (semAcento(b.titulo).indexOf(q) >= 0) - (semAcento(a.titulo).indexOf(q) >= 0); }).slice(0, 8);
+    marcado = achados.length ? 0 : -1;
+    desenharBusca();
+  }
+  function desenharBusca() {
+    caixa.hidden = false; busca.setAttribute("aria-expanded", "true");
+    caixa.innerHTML = achados.length ? achados.map(function (r, i) {
+      return '<button type="button" role="option" id="op-' + i + '" aria-selected="' + (i === marcado) + '" data-i="' + i + '"><span><b>' + esc(r.titulo) + "</b><small>" + esc(r.sub) + '</small></span><span class="tipo">' + esc(r.tipo) + "</span></button>";
+    }).join("") : '<div class="vazio">' + esc(t("semResultado", { q: busca.value.trim() })) + "</div>";
+    if (marcado >= 0) busca.setAttribute("aria-activedescendant", "op-" + marcado); else busca.removeAttribute("aria-activedescendant");
+  }
+  function fecharBusca() { caixa.hidden = true; busca.setAttribute("aria-expanded", "false"); }
+  function escolher(i) { var r = achados[i]; if (!r) return; fecharBusca(); busca.value = ""; r.abrir(); }
+  busca.addEventListener("input", buscar);
+  busca.addEventListener("focus", function () { if (busca.value.trim()) buscar(); });
+  busca.addEventListener("keydown", function (e) {
+    if (e.key === "ArrowDown" && achados.length) { e.preventDefault(); marcado = (marcado + 1) % achados.length; desenharBusca(); }
+    else if (e.key === "ArrowUp" && achados.length) { e.preventDefault(); marcado = (marcado - 1 + achados.length) % achados.length; desenharBusca(); }
+    else if (e.key === "Enter") { e.preventDefault(); escolher(marcado); }
+    else if (e.key === "Escape") { fecharBusca(); busca.blur(); }
+  });
+  caixa.addEventListener("mousedown", function (e) { e.preventDefault(); });
+  caixa.addEventListener("click", function (e) { var b = e.target.closest("[data-i]"); if (b) escolher(+b.dataset.i); });
+  busca.addEventListener("blur", function () { setTimeout(fecharBusca, 120); });
+  // "/" foca a busca de qualquer lugar (atalho comum em portais e no GitHub)
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "/" && !/input|textarea|select/i.test(document.activeElement.tagName) && !document.querySelector("dialog[open]")) { e.preventDefault(); busca.focus(); }
+  });
+
+  /* ---------- Calendário ---------- */
+  var calRef = new Date(HOJE.getFullYear(), HOJE.getMonth(), 1), diaSel = null;
+  var corDe = function (u) { return u === "pag" ? "var(--pag)" : u === "fer" || u === "geral" ? "var(--u-geral)" : "var(" + CFG.unidades[u].cor + ")"; };
+  var nomeU = function (u) { return u === "pag" ? t("geral") : u === "fer" ? t("feriado") : u === "geral" ? t("geral") : L(CFG.unidades[u]); };
+  function eventosEm(dataIso) {
+    var d = deIso(dataIso);
+    return todosEventos(d.getFullYear(), d.getMonth()).filter(function (e) { return e.data === dataIso; });
+  }
+  function renderCalendario() {
+    var ano = calRef.getFullYear(), mes = calRef.getMonth();
+    var titulo = calRef.toLocaleDateString(locale(), { month: "long", year: "numeric" });
+    $("#cal-mes").textContent = titulo.charAt(0).toUpperCase() + titulo.slice(1);
+    var nomes = [], base = new Date(2026, 0, 4); // um domingo
+    for (var i = 0; i < 7; i++) { var dd = new Date(base); dd.setDate(4 + i); nomes.push(dd.toLocaleDateString(locale(), { weekday: "short" }).replace(".", "")); }
+    $("#cal-semana").innerHTML = nomes.map(function (n) { return "<span>" + esc(n) + "</span>"; }).join("");
+    var inicio = new Date(ano, mes, 1 - new Date(ano, mes, 1).getDay());
+    var celulas = [];
+    for (var k = 0; k < 42; k++) {
+      var d = new Date(inicio); d.setDate(inicio.getDate() + k);
+      if (k >= 35 && d.getMonth() !== mes) break;
+      var di = iso(d), evs = eventosEm(di);
+      var cls = [d.getMonth() !== mes ? "fora" : "", d.getDay() === 0 || d.getDay() === 6 ? "fds" : "", di === iso(HOJE) ? "hoje" : ""].join(" ");
+      var rot = d.toLocaleDateString(locale(), { day: "numeric", month: "long" }) + (evs.length ? ": " + evs.map(function (e) { return L(e); }).join("; ") : "");
+      celulas.push('<button type="button" class="' + cls + '" data-dia="' + di + '" aria-pressed="' + (di === diaSel) + '" aria-label="' + esc(rot) + '"><span class="n num">' + d.getDate() + "</span>" +
+        evs.slice(0, 2).map(function (e) { return '<span class="ev" style="--c:' + corDe(e.u) + '">' + esc(L(e)) + "</span>"; }).join("") +
+        (evs.length > 2 ? '<span class="mais">+' + (evs.length - 2) + "</span>" : "") + "</button>");
+    }
+    $("#cal-dias").innerHTML = celulas.join("");
+    $("#cal-legenda").innerHTML = [["pag", t("pagamento")], ["fer", t("feriado")]].concat(Object.keys(CFG.unidades).map(function (u) { return [u, L(CFG.unidades[u])]; }))
+      .map(function (p) { return '<span><i style="background:' + corDe(p[0]) + '"></i>' + esc(p[1]) + "</span>"; }).join("");
+    renderListaEventos();
+  }
+  // Lista à direita: o dia escolhido, ou os próximos 6 eventos a partir de hoje.
+  function renderListaEventos() {
+    var itens;
+    if (diaSel) {
+      itens = eventosEm(diaSel);
+      $("#cal-lista-t").textContent = deIso(diaSel).toLocaleDateString(locale(), { weekday: "long", day: "numeric", month: "long" });
+      $("#cal-limpar").hidden = false;
+    } else {
+      var futuros = [];
+      for (var m = 0; m < 3; m++) {
+        var ref = new Date(HOJE.getFullYear(), HOJE.getMonth() + m, 1);
+        eventosDoMes(ref.getFullYear(), ref.getMonth()).forEach(function (e) { futuros.push(e); });
+      }
+      CFG.eventos.forEach(function (e) { futuros.push(e); });
+      Object.keys(FERIADOS).forEach(function (k) { futuros.push({ data: k, u: "fer", pt: FERIADOS[k].pt, en: FERIADOS[k].en }); });
+      itens = futuros.filter(function (e) { return e.data >= iso(HOJE); }).sort(function (a, b) { return a.data < b.data ? -1 : 1; }).slice(0, 6);
+      $("#cal-lista-t").textContent = t("proximos");
+      $("#cal-limpar").hidden = true;
+    }
+    $("#cal-lista").innerHTML = itens.length ? itens.map(function (e) {
+      var d = deIso(e.data);
+      return '<li><span class="d num"><b>' + d.getDate() + "</b>" + esc(d.toLocaleDateString(locale(), { month: "short" }).replace(".", "")) + "</span><p>" + esc(L(e)) +
+        "<small>" + etiquetaUnidade(e.u === "pag" || e.u === "fer" ? "geral" : e.u).replace('class="etiqueta"', 'class="etiqueta" style="margin-top:4px"') + "</small></p></li>";
+    }).join("") : '<li style="grid-template-columns:1fr"><p style="color:var(--tx3);font-weight:400">' + esc(t("nada")) + "</p></li>";
+  }
+  $("#cal-dias").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-dia]"); if (!b) return;
+    diaSel = diaSel === b.dataset.dia ? null : b.dataset.dia; renderCalendario();
+  });
+  $("#cal-ant").addEventListener("click", function () { calRef.setMonth(calRef.getMonth() - 1); renderCalendario(); });
+  $("#cal-prox").addEventListener("click", function () { calRef.setMonth(calRef.getMonth() + 1); renderCalendario(); });
+  $("#cal-hoje").addEventListener("click", function () { calRef = new Date(HOJE.getFullYear(), HOJE.getMonth(), 1); diaSel = null; renderCalendario(); });
+  $("#cal-limpar").addEventListener("click", function () { diaSel = null; renderCalendario(); });
+
+  /* ---------- Pessoas ---------- */
+  var iniciais = function (n) { var p = n.split(" "); return (p[0][0] + p[p.length - 1][0]).toUpperCase(); };
+  function renderPessoas() {
+    var mesNome = HOJE.toLocaleDateString(locale(), { month: "long" });
+    $("#aniv-t").textContent = t("aniversarios", { m: mesNome });
+    var hojeMD = iso(HOJE).slice(5);
+    $("#aniv").innerHTML = CFG.aniversarios.map(function (a) {
+      var dia = deIso(HOJE.getFullYear() + "-" + a[2]);
+      return '<div><span class="avatar" style="background:var(' + CFG.unidades[a[1]].cor + ')">' + esc(iniciais(a[0])) + "</span><span><b>" + esc(a[0]) + "</b><small>" + esc(L(CFG.unidades[a[1]])) + '</small></span><span class="dia num' + (a[2] === hojeMD ? " hj" : "") + '">' +
+        (a[2] === hojeMD ? esc(t("hojeE")) : esc(dia.toLocaleDateString(locale(), { day: "2-digit", month: "2-digit" }))) + "</span></div>";
+    }).join("");
+    $("#casa").innerHTML = CFG.tempoCasa.map(function (c) {
+      return '<li><span class="avatar" style="background:var(' + CFG.unidades[c[1]].cor + ')">' + esc(iniciais(c[0])) + "</span><span><b>" + esc(c[0]) + "</b><small>" + esc(L(CFG.unidades[c[1]])) + '</small></span><span class="anos">' + esc(t("anos", { n: c[2] })) + "</span></li>";
+    }).join("");
+  }
+
+  /* ---------- Contatos ---------- */
+  function renderContatos() {
+    $("#contatos").innerHTML = CFG.contatos.map(function (c, i) {
+      var rosto = c.foto ? '<img src="' + esc(c.foto) + '" alt="">' : esc(iniciais(c.nome));
+      return '<div class="contato"><span class="avatar" style="background:var(--tx2)">' + rosto + '</span><div><span class="assunto">' + esc(L(c.assunto)) + "</span><b>" + esc(c.nome) + "</b><small>" + esc(L(c.papel)) +
+        '</small><button type="button" data-email="' + i + '" id="email-' + i + '">' + esc(c.email) + "</button></div></div>";
+    }).join("");
+  }
+  $("#contatos").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-email]"); if (!b) return;
+    copiar(CFG.contatos[+b.dataset.email].email, t("emailCopiado"), b);
+  });
+
+  /* ---------- Popup de chamado ---------- */
+  var dlgCh = $("#dlg-chamado"), formCh = $("#chamado-corpo").innerHTML;
+  function prepararChamado() {
+    $("#c-assunto").innerHTML = CFG.contatos.map(function (c, i) { return '<option value="' + i + '">' + esc(L(c.assunto)) + "</option>"; }).join("");
+    $("#c-unidade").innerHTML = Object.keys(CFG.unidades).map(function (u) { return '<option value="' + u + '"' + (u === meuU ? " selected" : "") + ">" + esc(L(CFG.unidades[u])) + "</option>"; }).join("");
+    traduzirEstaticos(dlgCh);
+  }
+  function abrirChamado() { if ($("#chamado-corpo .ok")) $("#chamado-corpo").innerHTML = formCh; prepararChamado(); dlgCh.showModal(); }
+  $$("[data-abre-chamado]").forEach(function (b) { b.addEventListener("click", abrirChamado); });
+  // Envia o chamado: com endpoint no config, manda JSON; sem, simula. Por quê: o mesmo arquivo serve de demo e de produção.
+  dlgCh.addEventListener("submit", function (e) {
+    if (e.target.id !== "form-chamado") return;
+    e.preventDefault();
+    var texto = $("#c-texto"), anexo = $("#c-anexo").files[0], ok = true;
+    var curto = texto.value.trim().length < 15;
+    texto.setAttribute("aria-invalid", curto); $("#e-texto").textContent = curto ? t("erroTexto") : "";
+    var grande = anexo && anexo.size > 5 * 1024 * 1024;
+    $("#e-anexo").textContent = grande ? t("erroAnexo") : "";
+    if (curto) { texto.focus(); ok = false; } else if (grande) { $("#c-anexo").focus(); ok = false; }
+    if (!ok) return;
+    var ct = CFG.contatos[+$("#c-assunto").value];
+    var dados = { assunto: ct.assunto.pt, unidade: $("#c-unidade").value, texto: texto.value.trim(), anexo: anexo ? anexo.name : null, usuario: CFG.usuario.nome, abertoEm: new Date().toISOString() };
+    var botao = e.target.querySelector("button[type=submit]"); botao.disabled = true; botao.textContent = t("enviando");
+    var envio = CFG.chamadoEndpoint
+      ? fetch(CFG.chamadoEndpoint, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(dados) }).then(function (r) { if (!r.ok) throw new Error(r.status); })
+      : Promise.resolve();
+    envio.then(function () {
+      var protocolo = "RH-" + HOJE.getFullYear() + "-" + String(Date.now()).slice(-4);
+      $("#chamado-corpo").innerHTML = '<div class="ok"><span class="selo-ok">✓</span><h3>' + esc(t("chamadoOk")) + "</h3><code>" + protocolo + "</code><p>" + esc(t("chamadoTxt", { a: L(ct.assunto) })) + "</p>" +
+        (CFG.chamadoEndpoint ? "" : '<p class="dica">' + esc(t("demo")) + "</p>") + '<button class="botao" type="button" data-fecha>' + esc(t("fechar")) + "</button></div>";
+    }).catch(function () { botao.disabled = false; botao.textContent = t("enviar"); $("#e-texto").textContent = t("erroEnvio"); });
+  });
+
+  /* ---------- Idioma ---------- */
+  // Troca os textos fixos (data-t) e redesenha o que é gerado. Guarda a escolha neste navegador.
+  function traduzirEstaticos(raiz) {
+    $$("[data-t]", raiz).forEach(function (el) { el.textContent = t(el.dataset.t); });
+    $$("[data-t-ph]", raiz).forEach(function (el) { el.placeholder = t(el.dataset.tPh); });
+  }
+  function aplicarIdioma() {
+    document.documentElement.lang = lang === "pt" ? "pt-BR" : "en";
+    $$(".idioma button").forEach(function (b) { b.setAttribute("aria-pressed", b.dataset.lang === lang); });
+    traduzirEstaticos(document);
+    renderBoas(); renderAvisos(); renderFiltro(); renderGrades(); renderCalendario(); renderPessoas(); renderContatos();
+    if (dlgItem.open && itemAberto) abrirItem(itemAberto.id);
+    if (dlgCh.open && !$("#chamado-corpo .ok")) prepararChamado();
+    ED.religar();
+  }
+  $$(".idioma button").forEach(function (b) {
+    b.addEventListener("click", function () {
+      lang = b.dataset.lang;
+      try { localStorage.setItem("portal-lang", lang); } catch (e) {}
+      aplicarIdioma();
+      ED.atualizarPainel(); // com o modo admin aberto, a aba mostra os textos do idioma novo
+    });
+  });
+
+  /* ---------- Menu: marca a seção visível ---------- */
+  var links = $$("#menu a");
+  var vigia = new IntersectionObserver(function (es) {
+    es.forEach(function (e) { if (e.isIntersecting) links.forEach(function (l) { l.setAttribute("aria-current", l.hash === "#" + e.target.id); }); });
+  }, { rootMargin: "-40% 0px -55% 0px" });
+  ["inicio", "calendario", "beneficios", "programas", "politicas", "dp", "pessoas", "contato"].forEach(function (id) { vigia.observe(document.getElementById(id)); });
+
+  aplicarIdioma();
+
+  /* ---------- Modo admin: aba Comunicados (o que o RH mais edita) ---------- */
+  // Por quê uma aba própria: comunicado muda toda semana. Data, unidade, título e texto num formulário curto,
+  // com ↑ ↓ ✕ para ordenar e remover. Vai no mesmo Salvar: fica no bloco #personalizacao e vale por cima do config.
+  function abaComunicados(div) {
+    function desenhar() {
+      var unidades = [["geral", t("geral")]].concat(Object.keys(CFG.unidades).map(function (u) { return [u, L(CFG.unidades[u])]; }));
+      div.innerHTML = '<p class="ed-dica">Aparecem nesta ordem na seção Comunicados. Título e texto são os do idioma aberto no portal (' + lang.toUpperCase() + ').</p>' +
+        '<button type="button" class="ed-bt largo" data-novo>+ Novo comunicado</button>' +
+        CFG.avisos.map(function (a, i) {
+          var txt = L(a);
+          return '<div class="ed-registro" data-i="' + i + '"><div class="ed-linha">' +
+            '<input type="date" data-c="data" value="' + esc(a.data) + '" aria-label="Data">' +
+            '<button type="button" class="ed-bt mini" data-mover="-1" aria-label="Subir"' + (i ? "" : " disabled") + ">↑</button>" +
+            '<button type="button" class="ed-bt mini" data-mover="1" aria-label="Descer"' + (i < CFG.avisos.length - 1 ? "" : " disabled") + ">↓</button>" +
+            '<button type="button" class="ed-bt mini" data-remover aria-label="Remover">✕</button></div>' +
+            '<select data-c="u" aria-label="Unidade">' + unidades.map(function (u) { return '<option value="' + u[0] + '"' + (u[0] === a.u ? " selected" : "") + ">" + esc(u[1]) + "</option>"; }).join("") + "</select>" +
+            '<input type="text" data-c="titulo" value="' + esc(txt[0]) + '" aria-label="Título">' +
+            '<textarea data-c="texto" rows="2" aria-label="Texto">' + esc(txt[1]) + "</textarea></div>";
+        }).join("");
+    }
+    // cada mudança: guarda no modo admin (vai no Salvar) e redesenha a seção na página
+    function gravar() { ED.gravarDados("avisos", CFG.avisos); renderAvisos(); }
+    desenhar();
+    div.addEventListener("input", function (e) {
+      var item = e.target.closest("[data-i]"), campo = e.target.getAttribute("data-c");
+      if (!item || !campo) return;
+      var a = CFG.avisos[+item.getAttribute("data-i")];
+      if (campo === "data") { if (!e.target.value) return; a.data = e.target.value; }
+      if (campo === "u") a.u = e.target.value;
+      if (campo === "titulo" || campo === "texto") { var txt = L(a).slice(); txt[campo === "titulo" ? 0 : 1] = e.target.value; a[lang] = txt; }
+      gravar();
+    });
+    div.addEventListener("click", function (e) {
+      var b = e.target.closest("button");
+      if (!b) return;
+      var item = b.closest("[data-i]"), i = item ? +item.getAttribute("data-i") : -1;
+      if (b.hasAttribute("data-novo")) {
+        var hoje = HOJE.getFullYear() + "-" + String(HOJE.getMonth() + 1).padStart(2, "0") + "-" + String(HOJE.getDate()).padStart(2, "0");
+        CFG.avisos.unshift({ data: hoje, u: "geral", pt: ["Novo comunicado", "Escreva aqui o texto."] });
+      }
+      if (b.hasAttribute("data-mover")) { var j = i + Number(b.getAttribute("data-mover")); CFG.avisos.splice(j, 0, CFG.avisos.splice(i, 1)[0]); }
+      if (b.hasAttribute("data-remover")) CFG.avisos.splice(i, 1);
+      gravar();
+      desenhar();
+    });
+  }
+
+  // Onde aparecem os textos que só o JavaScript escreve (os que estão no HTML o modo admin acha sozinho).
+  var LUGAR = {
+    "Boas-vindas": "ola bomDia boaTarde boaNoite emDias amanha hojeE",
+    "Comunicados": "geral",
+    "Calendário": "pagamento adiantamento feriado proximos nada",
+    "Benefícios": "todas voce verPara",
+    "Cartões": "naoInclui",
+    "Pessoas (aniversários e tempo de casa)": "aniversarios anos",
+    "Fale com o RH": "copiarEmail",
+    "Janela do cartão": "fale incluiVoce",
+    "Janela do chamado": "erroTexto erroAnexo enviando erroEnvio chamadoOk chamadoTxt demo fechar",
+    "Busca": "semResultado tItem tContato tAviso",
+    "Avisos rápidos": "atalhoDemo pdfDemo linkCopiado emailCopiado copieManual"
+  };
+  var lugarDoTexto = function (k) { return Object.keys(LUGAR).filter(function (l) { return (" " + LUGAR[l] + " ").indexOf(" " + k + " ") >= 0; })[0]; };
+
+  /* ---------- Modo admin: diz ao motor o que pode ser personalizado ---------- */
+  ED.iniciar({
+    abas: [{ nome: "Comunicados", desenhar: abaComunicados }],
+    textos: {
+      seletor: "[data-t]", chave: function (el) { return lang + ":" + el.getAttribute("data-t"); }, aplicar: false, puro: true,
+      nota: function () { return "Você está editando os textos em " + (lang === "pt" ? "português. Para os em inglês, troque para EN" : "inglês. Para os em português, troque para PT") + " no topo do portal."; },
+      lista: function () {
+        return Object.keys(TXT[lang]).map(function (k) {
+          var el = document.querySelector('[data-t="' + k + '"],[data-t-ph="' + k + '"]');
+          return { chave: lang + ":" + k, original: TXT[lang][k], el: el, lugar: lugarDoTexto(k) };
+        });
+      }
+    },
+    secoes: { menus: ["#menu"], fixas: "a faixa de boas-vindas" },
+    tema: [
+      { v: "--acc", r: "Destaque (botões, links, seleção)", claro: "#6D5AE6", escuro: "#9D8CFF" },
+      { v: "--escuro", r: "Faixa de boas-vindas", claro: "#17151F", escuro: "#08070D" }
+    ],
+    aoMudar: aplicarIdioma
+  });
+
+  // Link direto para um item (ex.: ...#ferias) abre o cartão dele
+  var alvo = location.hash.slice(1);
+  if (alvo && ITENS.some(function (i) { return i.id === alvo; })) abrirItem(alvo);
+})();
+</script>
+</body>
+</html>
